@@ -1,0 +1,1504 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>טופס הזמנת קורסים — חטיפי למידה</title>
+
+  <!-- ========================================================
+       ספריות חיצוניות
+       - jsPDF: הפקת PDF
+       - html2canvas: צילום מסך לצורך PDF
+       - docx: הפקת Word
+       ======================================================== -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+  <style>
+    /* ======================================================
+       משתני עיצוב גלובליים — לעריכה קלה
+       ====================================================== */
+    :root {
+      --color-primary: #1a5276;       /* כחול כהה — צבע ראשי */
+      --color-secondary: #2e86c1;     /* כחול בהיר */
+      --color-accent: #f39c12;        /* כתום — צבע הדגשה */
+      --color-accent-light: #fef9e7;  /* רקע בהיר לכתום */
+      --color-bg: #f4f6f9;
+      --color-surface: #ffffff;
+      --color-border: #d5dbdb;
+      --color-text: #1c2833;
+      --color-text-muted: #5d6d7e;
+      --color-success: #1e8449;
+      --color-error: #c0392b;
+      --color-selected-bg: #eaf4fb;
+      --color-selected-border: #2e86c1;
+      --radius: 10px;
+      --shadow: 0 2px 12px rgba(26,82,118,0.09);
+      --shadow-hover: 0 6px 24px rgba(26,82,118,0.15);
+      --font-main: 'Segoe UI', 'Arial Hebrew', Arial, sans-serif;
+    }
+
+    /* ======================================================
+       איפוס בסיסי + RTL
+       ====================================================== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-main);
+      background: var(--color-bg);
+      color: var(--color-text);
+      direction: rtl;
+      min-height: 100vh;
+    }
+
+    /* ======================================================
+       פריסה ראשית
+       ====================================================== */
+    .page-wrapper {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 24px 16px 60px;
+    }
+
+    /* ======================================================
+       כרטיס תוכן
+       ====================================================== */
+    .card {
+      background: var(--color-surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 32px 36px;
+      margin-bottom: 24px;
+    }
+
+    .card-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--color-primary);
+      border-bottom: 2px solid var(--color-secondary);
+      padding-bottom: 10px;
+      margin-bottom: 22px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-title .icon {
+      font-size: 1.25rem;
+    }
+
+    /* ======================================================
+       כותרת עליונה
+       ====================================================== */
+    .header-card {
+      background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+      color: white;
+      text-align: center;
+      padding: 36px 36px 28px;
+      border-radius: var(--radius);
+      margin-bottom: 24px;
+      box-shadow: var(--shadow-hover);
+    }
+
+    /* ===== לוגו placeholder — מחליפים עם תמונה אמיתית =====
+       כדי להחליף לוגו:
+       1. הסר את ה-.logo-placeholder
+       2. הוסף: <img src="logo.png" class="logo-img" alt="חטיפי למידה">
+       3. הגדר .logo-img { max-height: 80px; }
+       ====================================================== */
+    .logo-placeholder {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255,255,255,0.18);
+      border: 2px dashed rgba(255,255,255,0.6);
+      border-radius: 12px;
+      padding: 14px 28px;
+      margin-bottom: 18px;
+      font-size: 1.6rem;
+      font-weight: 900;
+      letter-spacing: 1px;
+      color: white;
+      gap: 10px;
+    }
+
+    .logo-placeholder .logo-emoji { font-size: 2rem; }
+
+    .header-card h1 {
+      font-size: 1.55rem;
+      font-weight: 800;
+      margin-bottom: 10px;
+      line-height: 1.4;
+    }
+
+    .header-card .subtitle {
+      font-size: 0.95rem;
+      opacity: 0.88;
+      max-width: 600px;
+      margin: 0 auto 16px;
+      line-height: 1.6;
+    }
+
+    .intro-note {
+      background: rgba(255,255,255,0.15);
+      border-radius: 8px;
+      padding: 12px 18px;
+      font-size: 0.88rem;
+      opacity: 0.95;
+      line-height: 1.6;
+    }
+
+    /* ======================================================
+       שדות טופס
+       ====================================================== */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px 24px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-group.full-width {
+      grid-column: 1 / -1;
+    }
+
+    label {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--color-primary);
+    }
+
+    label .required-star {
+      color: var(--color-error);
+      margin-right: 3px;
+    }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="tel"],
+    input[type="date"] {
+      border: 1.5px solid var(--color-border);
+      border-radius: 7px;
+      padding: 10px 13px;
+      font-size: 0.95rem;
+      font-family: var(--font-main);
+      color: var(--color-text);
+      background: #fafbfc;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      width: 100%;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: var(--color-secondary);
+      box-shadow: 0 0 0 3px rgba(46,134,193,0.12);
+      background: white;
+    }
+
+    input.error-field {
+      border-color: var(--color-error);
+      background: #fff5f5;
+    }
+
+    .field-error {
+      font-size: 0.82rem;
+      color: var(--color-error);
+      display: none;
+    }
+
+    .field-error.visible {
+      display: block;
+    }
+
+    /* ======================================================
+       כרטיסי קורסים
+       ====================================================== */
+    .courses-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 14px;
+    }
+
+    .course-card {
+      border: 1.5px solid var(--color-border);
+      border-radius: 9px;
+      padding: 14px 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: #fafbfc;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      user-select: none;
+    }
+
+    .course-card:hover {
+      border-color: var(--color-secondary);
+      box-shadow: var(--shadow);
+      background: var(--color-selected-bg);
+    }
+
+    .course-card.selected {
+      border-color: var(--color-selected-border);
+      background: var(--color-selected-bg);
+      box-shadow: 0 2px 10px rgba(46,134,193,0.18);
+    }
+
+    .course-checkbox-custom {
+      width: 22px;
+      height: 22px;
+      min-width: 22px;
+      border: 2px solid var(--color-border);
+      border-radius: 5px;
+      background: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+      margin-top: 2px;
+    }
+
+    .course-card.selected .course-checkbox-custom {
+      background: var(--color-secondary);
+      border-color: var(--color-secondary);
+    }
+
+    .course-checkbox-custom::after {
+      content: '';
+      display: none;
+      width: 6px;
+      height: 11px;
+      border: 2.5px solid white;
+      border-top: none;
+      border-right: none; /* RTL: flip */
+      transform: rotate(-45deg) scaleX(-1);
+      margin-top: -3px;
+    }
+
+    .course-card.selected .course-checkbox-custom::after {
+      display: block;
+    }
+
+    .course-info { flex: 1; }
+
+    .course-name {
+      font-size: 0.93rem;
+      font-weight: 600;
+      color: var(--color-text);
+      line-height: 1.35;
+      margin-bottom: 4px;
+    }
+
+    .course-price {
+      font-size: 0.82rem;
+      color: var(--color-text-muted);
+      font-weight: 500;
+    }
+
+    /* ======================================================
+       סיכום הזמנה
+       ====================================================== */
+    .summary-box {
+      background: var(--color-accent-light);
+      border: 1.5px solid #f0c040;
+      border-radius: var(--radius);
+      padding: 20px 24px;
+    }
+
+    .summary-empty {
+      color: var(--color-text-muted);
+      font-style: italic;
+      font-size: 0.93rem;
+      text-align: center;
+      padding: 10px 0;
+    }
+
+    .summary-list {
+      list-style: none;
+      margin-bottom: 14px;
+    }
+
+    .summary-list li {
+      padding: 5px 0;
+      font-size: 0.92rem;
+      border-bottom: 1px dashed #e5c055;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .summary-list li:last-child { border-bottom: none; }
+
+    .summary-total-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 12px;
+      border-top: 2px solid #e5c055;
+      margin-top: 6px;
+    }
+
+    .summary-total-label {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--color-primary);
+    }
+
+    .summary-total-amount {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--color-primary);
+    }
+
+    .summary-count {
+      font-size: 0.88rem;
+      color: var(--color-text-muted);
+      margin-bottom: 12px;
+    }
+
+    /* ======================================================
+       תנאי הפעלה
+       ====================================================== */
+    .terms-highlight {
+      background: linear-gradient(135deg, #e8f8f0, #d5f0e4);
+      border: 1.5px solid #27ae60;
+      border-radius: 7px;
+      padding: 11px 15px;
+      color: #1a6b3a;
+      font-weight: 700;
+      font-size: 0.97rem;
+      display: inline-block;
+      width: 100%;
+    }
+
+    .terms-box {
+      background: #f8f9fa;
+      border-right: 4px solid var(--color-secondary);
+      border-radius: 6px;
+      padding: 18px 20px;
+      font-size: 0.93rem;
+      line-height: 1.8;
+      color: var(--color-text);
+    }
+
+    /* ======================================================
+       אזור אישור חתימה
+       ====================================================== */
+    .approval-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px 30px;
+    }
+
+    .approval-field {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .approval-label {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--color-primary);
+    }
+
+    .approval-line {
+      border-bottom: 1.5px solid var(--color-text);
+      min-height: 36px;
+      background: transparent;
+    }
+
+    /* ======================================================
+       הנחיות שליחה
+       ====================================================== */
+    .instructions-box {
+      background: #eaf6fb;
+      border: 1.5px solid #a9cce3;
+      border-radius: var(--radius);
+      padding: 18px 22px;
+      font-size: 0.93rem;
+      line-height: 1.8;
+    }
+
+    .instructions-box strong { color: var(--color-primary); }
+
+    /* ======================================================
+       הודעת שגיאה כללית
+       ====================================================== */
+    .global-error {
+      background: #fdf0ef;
+      border: 1.5px solid var(--color-error);
+      border-radius: 8px;
+      padding: 14px 18px;
+      color: var(--color-error);
+      font-size: 0.93rem;
+      line-height: 1.7;
+      display: none;
+      margin-bottom: 16px;
+    }
+
+    .global-error.visible { display: block; }
+
+    /* ======================================================
+       כפתורי פעולה
+       ====================================================== */
+    .actions-area {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 8px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 22px;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      font-family: var(--font-main);
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+      text-decoration: none;
+    }
+
+    .btn-print {
+      background: var(--color-primary);
+      color: white;
+      font-size: 1.05rem;
+      padding: 14px 30px;
+      box-shadow: 0 4px 14px rgba(26,82,118,0.25);
+    }
+
+    .btn-print:hover {
+      background: #154360;
+      box-shadow: 0 6px 20px rgba(26,82,118,0.35);
+      transform: translateY(-1px);
+    }
+
+    .btn-pdf {
+      background: #c0392b;
+      color: white;
+    }
+
+    .btn-pdf:hover { background: #a93226; transform: translateY(-1px); }
+
+    .btn-word {
+      background: #1a5276;
+      color: white;
+    }
+
+    .btn-word:hover { background: #154360; transform: translateY(-1px); }
+
+    .btn-preview {
+      background: var(--color-accent);
+      color: white;
+    }
+
+    .btn-preview:hover { background: #d68910; transform: translateY(-1px); }
+
+    .btn-clear {
+      background: white;
+      color: var(--color-text-muted);
+      border: 1.5px solid var(--color-border);
+    }
+
+    .btn-clear:hover { background: #f4f6f9; border-color: #aab; }
+
+    /* ======================================================
+       מודל תצוגה מקדימה
+       ====================================================== */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-overlay.open { display: flex; }
+
+    .modal-box {
+      background: white;
+      border-radius: 12px;
+      max-width: 720px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+
+    .modal-header {
+      background: var(--color-primary);
+      color: white;
+      padding: 18px 24px;
+      border-radius: 12px 12px 0 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-header h2 { font-size: 1.1rem; }
+
+    .modal-close {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 1.5rem;
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    .modal-body {
+      padding: 28px 32px;
+      direction: rtl;
+      font-family: var(--font-main);
+    }
+
+    /* ======================================================
+       תוכן מסמך טופס (preview + print)
+       ====================================================== */
+    .doc-header {
+      text-align: center;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 2px solid var(--color-primary);
+    }
+
+    .doc-logo-area {
+      margin-bottom: 10px;
+      font-size: 1.5rem;
+      font-weight: 900;
+      color: var(--color-primary);
+    }
+
+    .doc-title {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: var(--color-primary);
+      margin-bottom: 4px;
+    }
+
+    .doc-date-line {
+      font-size: 0.9rem;
+      color: var(--color-text-muted);
+    }
+
+    .doc-section-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--color-primary);
+      margin: 18px 0 10px;
+      border-bottom: 1px solid var(--color-border);
+      padding-bottom: 4px;
+    }
+
+    .doc-details-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 8px;
+    }
+
+    .doc-details-table td {
+      padding: 6px 10px;
+      font-size: 0.9rem;
+      border-bottom: 1px solid #eee;
+      vertical-align: top;
+    }
+
+    .doc-details-table td:first-child {
+      font-weight: 700;
+      color: var(--color-primary);
+      width: 38%;
+    }
+
+    .doc-courses-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 10px 0 16px;
+    }
+
+    .doc-courses-table th {
+      background: var(--color-primary);
+      color: white;
+      padding: 9px 12px;
+      font-size: 0.88rem;
+      text-align: right;
+    }
+
+    .doc-courses-table td {
+      padding: 8px 12px;
+      font-size: 0.88rem;
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .doc-courses-table tr:nth-child(even) td { background: #f0f5fb; }
+
+    .doc-total-box {
+      background: var(--color-accent-light);
+      border: 1px solid #f0c040;
+      border-radius: 7px;
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+
+    .doc-total-box .label { font-weight: 700; color: var(--color-primary); }
+    .doc-total-box .amount { font-size: 1.2rem; font-weight: 800; color: var(--color-primary); }
+
+    .doc-terms {
+      background: #f8f9fa;
+      border-right: 3px solid var(--color-secondary);
+      padding: 12px 14px;
+      font-size: 0.86rem;
+      line-height: 1.75;
+      margin-bottom: 18px;
+      border-radius: 4px;
+    }
+
+    .doc-instructions {
+      background: #eaf6fb;
+      border: 1px solid #a9cce3;
+      border-radius: 6px;
+      padding: 12px 14px;
+      font-size: 0.86rem;
+      line-height: 1.75;
+      margin-bottom: 18px;
+    }
+
+    .doc-approval {
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1.5px solid var(--color-border);
+    }
+
+    .doc-approval-title {
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: var(--color-primary);
+      margin-bottom: 20px;
+    }
+
+    .doc-sig-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px 36px;
+    }
+
+    .doc-sig-field { display: flex; flex-direction: column; gap: 6px; }
+    .doc-sig-label { font-size: 0.82rem; font-weight: 600; color: var(--color-text-muted); }
+    .doc-sig-value { font-size: 0.92rem; font-weight: 600; padding-bottom: 4px; }
+    .doc-sig-line { border-bottom: 1.5px solid #333; min-height: 44px; }
+
+    /* ======================================================
+       פוטר חברה
+       ====================================================== */
+    .company-footer {
+      border-top: 1px solid #d5dbdb;
+      margin-top: 8px;
+      padding: 18px 0 28px;
+      direction: rtl;
+    }
+
+    .company-footer-inner {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .company-initials {
+      font-size: 1.5rem;
+      font-weight: 900;
+      color: #c0b090;
+      letter-spacing: 2px;
+      border: 2px solid #c0b090;
+      padding: 6px 10px;
+      border-radius: 4px;
+      line-height: 1;
+      flex-shrink: 0;
+      font-family: 'Georgia', serif;
+    }
+
+    .company-details {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .company-name {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: #5d6d7e;
+    }
+
+    .company-address {
+      font-size: 0.82rem;
+      color: #7f8c8d;
+    }
+
+    .company-contacts {
+      font-size: 0.82rem;
+      color: #7f8c8d;
+    }
+
+    /* ======================================================
+       @media print — הצג print-area בלבד, שמור צבעים
+       ====================================================== */
+    @media print {
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+
+      body { background: white !important; }
+
+      .page-wrapper, .header-card, .card, .actions-area,
+      .global-error, .modal-overlay, .company-footer {
+        display: none !important;
+      }
+
+      #print-area {
+        display: block !important;
+        direction: rtl;
+        font-family: 'Arial Hebrew', Arial, sans-serif;
+      }
+
+      .no-print { display: none !important; }
+
+      @page {
+        margin: 12mm 14mm;
+        size: A4 portrait;
+      }
+    }
+
+    /* הסתר print-area במסך */
+    @media screen {
+      #print-area { display: none; }
+    }
+
+    /* ======================================================
+       responsive
+       ====================================================== */
+    @media (max-width: 640px) {
+      .card { padding: 20px 16px; }
+      .form-grid { grid-template-columns: 1fr; }
+      .courses-grid { grid-template-columns: 1fr; }
+      .approval-grid { grid-template-columns: 1fr; }
+      .doc-sig-grid { grid-template-columns: 1fr; }
+      .actions-area { flex-direction: column; align-items: stretch; }
+      .btn { justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ======================================================
+     אזור הדפסה (מוסתר במסך, מוצג בהדפסה)
+     ====================================================== -->
+<div id="print-area"></div>
+
+<!-- ======================================================
+     מודל תצוגה מקדימה
+     ====================================================== -->
+<div class="modal-overlay" id="previewModal" role="dialog" aria-modal="true">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>תצוגה מקדימה — טופס ההזמנה</h2>
+      <button class="modal-close" onclick="closePreview()" aria-label="סגור">✕</button>
+    </div>
+    <div class="modal-body" id="previewContent"></div>
+  </div>
+</div>
+
+<!-- ======================================================
+     דף הטופס הראשי
+     ====================================================== -->
+<div class="page-wrapper">
+
+  <!-- כותרת עליונה -->
+  <div class="header-card">
+    <!-- ===== LOGO: החלף את ה-div הבא בתגית <img> עם הלוגו שלך =====
+         לדוגמה: <img src="logo.png" alt="חטיפי למידה" style="max-height:70px; margin-bottom:14px;">
+         ============================================================= -->
+    <img src="data:image/jpeg;base64,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" alt="חטיפי למידה" style="max-height:80px; margin-bottom:14px; display:block; margin-left:auto; margin-right:auto;">
+
+    <h1>הצעת מחיר - הזמנת קורסים דיגיטליים</h1>
+    <p class="subtitle">מלאו את פרטי ההזמנה, בחרו את הקורסים הרצויים, הפיקו את הטופס או הדפיסו אותו ישירות, חתמו ידנית ושלחו אלינו במייל או בפקס.</p>
+
+  </div>
+
+  <!-- תאריך הזמנה -->
+  <div class="card">
+    <div class="card-title"><span class="icon">📅</span> תאריך הזמנה</div>
+    <div class="form-group" style="max-width:220px;">
+      <label for="orderDate">תאריך <span class="required-star">*</span></label>
+      <input type="date" id="orderDate" name="orderDate">
+    </div>
+  </div>
+
+  <!-- פרטי בית הספר -->
+  <div class="card">
+    <div class="card-title"><span class="icon">🏫</span> פרטי בית הספר</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label for="schoolName">שם בית הספר <span class="required-star">*</span></label>
+        <input type="text" id="schoolName" placeholder="שם בית הספר">
+        <span class="field-error" id="err-schoolName">נא להזין שם בית ספר</span>
+      </div>
+      <div class="form-group">
+        <label for="schoolSymbol">סמל מוסד <span class="required-star">*</span></label>
+        <input type="text" id="schoolSymbol" placeholder="מספר סמל המוסד">
+        <span class="field-error" id="err-schoolSymbol">נא להזין סמל מוסד</span>
+      </div>
+      <div class="form-group">
+        <label for="principalName">שם מנהל/ת <span class="required-star">*</span></label>
+        <input type="text" id="principalName" placeholder="שם מלא">
+        <span class="field-error" id="err-principalName">נא להזין שם מנהל/ת</span>
+      </div>
+      <div class="form-group">
+        <label for="ordererRole">תפקיד המזמין/ה (אם שונה ממנהל/ת)</label>
+        <input type="text" id="ordererRole" placeholder="לדוגמה: רכזת פדגוגית">
+      </div>
+      <div class="form-group">
+        <label for="phone">טלפון ליצירת קשר</label>
+        <input type="tel" id="phone" placeholder="050-0000000">
+      </div>
+      <div class="form-group">
+        <label for="email">כתובת דוא״ל</label>
+        <input type="email" id="email" placeholder="example@school.edu.il">
+      </div>
+      <div class="form-group">
+        <label for="city">עיר / רשות מקומית</label>
+        <input type="text" id="city" placeholder="שם העיר או הרשות">
+      </div>
+    </div>
+  </div>
+
+  <!-- בחירת קורסים -->
+  <div class="card">
+    <div class="card-title"><span class="icon">🎓</span> בחירת קורסים</div>
+    <p style="font-size:0.9rem;color:var(--color-text-muted);margin-bottom:16px;">לחצו על הקורסים הרצויים לסימון. ניתן לבחור מספר קורסים.</p>
+
+    <div class="courses-grid" id="coursesGrid">
+      <!-- קורסים נוצרים דינמית ב-JS -->
+    </div>
+  </div>
+
+  <!-- סיכום הזמנה -->
+  <div class="card">
+    <div class="card-title"><span class="icon">💰</span> סיכום הזמנה</div>
+    <div class="summary-box" id="summaryBox">
+      <div class="summary-empty" id="summaryEmpty">טרם נבחרו קורסים להזמנה.</div>
+      <div id="summaryContent" style="display:none;">
+        <div class="summary-count" id="summaryCount"></div>
+        <ul class="summary-list" id="summaryList"></ul>
+        <div class="summary-total-row">
+          <span class="summary-total-label">סה״כ לתשלום:</span>
+          <span class="summary-total-amount" id="summaryTotal"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- תנאי הפעלה -->
+  <div class="card">
+    <div class="card-title"><span class="icon">📋</span> תנאי ההזמנה וההפעלה</div>
+    <div class="terms-box">
+      <div class="terms-highlight">🎉 התכנית תפעל בבית הספר החל מיום 01/09/2026 ועד סוף שנת הלימודים תשפ״ז, ללא הגבלת תלמידים.</div><br>
+      להפעלת הקורס בכיתה נדרש מחשב ומקרן.<br><br>
+      הקורס הינו קורס דיגיטלי. הפעלת הקורס תיעשה על ידי מורה מבית הספר.<br><br>
+      צוות "חטיפי למידה" מחויבים לספק את הסביבה הדיגיטלית עם כל חומרי הלימוד, וכן ליווי והנחייה ככל שיידרשו לצוותי ההוראה.
+    </div>
+  </div>
+
+  <!-- אזור אישור -->
+  <div class="card">
+    <div class="card-title"><span class="icon">✍️</span> אישור ההזמנה</div>
+    <p style="font-size:0.93rem;margin-bottom:20px;color:var(--color-text);">אני מאשר/ת את פרטי ההזמנה כמפורט לעיל.</p>
+    <div class="approval-grid">
+      <div class="approval-field">
+        <label class="approval-label" for="approvalDate">תאריך</label>
+        <input type="date" id="approvalDate" style="border:1.5px solid var(--color-border);border-radius:7px;padding:9px 12px;font-size:0.95rem;font-family:var(--font-main);background:#fafbfc;width:100%;">
+      </div>
+      <div class="approval-field">
+        <label class="approval-label" for="approvalPrincipal">שם מנהל/ת</label>
+        <input type="text" id="approvalPrincipal" placeholder="שם מלא" style="border:1.5px solid var(--color-border);border-radius:7px;padding:9px 12px;font-size:0.95rem;font-family:var(--font-main);background:#fafbfc;width:100%;">
+      </div>
+      <div class="approval-field">
+        <div class="approval-label">חתימה</div>
+        <div class="approval-line"></div>
+        <div style="font-size:0.78rem;color:var(--color-text-muted);">* יש לחתום ידנית לאחר הדפסה</div>
+      </div>
+      <div class="approval-field">
+        <div class="approval-label">חותמת בית הספר</div>
+        <div class="approval-line"></div>
+        <div style="font-size:0.78rem;color:var(--color-text-muted);">* יש להטביע חותמת לאחר הדפסה</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- הנחיות שליחה -->
+  <div class="card">
+    <div class="card-title"><span class="icon">📨</span> הנחיות לאחר מילוי</div>
+    <div class="instructions-box">
+      לאחר מילוי הטופס יש להפיק את המסמך או להדפיסו ישירות, לחתום ידנית, להוסיף חותמת בית ספר, ולשלוח אלינו בחזרה במייל או בפקס.<br><br>
+      <!-- ===== עדכון מייל: שנה את הכתובת בשורה הבאה ===== -->
+      <strong>מייל:</strong> <a href="mailto:mekuvanim@gmail.com">mekuvanim@gmail.com</a><br>
+      <!-- ===== עדכון פקס: שנה את המספר בשורה הבאה ===== -->
+      <strong>פקס:</strong> 03-6416920<br><br>
+      * לשאלות: <strong>050-5274030</strong><br>
+      * לצורך דיווח במערכת גפ"ן — אנא פנו אלינו לקבלת הנחיות
+    </div>
+  </div>
+
+  <!-- הודעת שגיאה כללית -->
+  <div class="global-error" id="globalError"></div>
+
+  <!-- כפתורי פעולה -->
+  <div class="card">
+    <div class="card-title"><span class="icon">⚡</span> פעולות</div>
+    <div class="actions-area">
+      <button class="btn btn-print" onclick="handlePrint()">🖨️ הדפסה</button>
+      <button class="btn btn-preview" onclick="handlePreview()">👁️ תצוגה מקדימה</button>
+      <button class="btn btn-pdf" onclick="handlePDF()">📄 הפקת PDF</button>
+      <button class="btn btn-word" onclick="handleWord()">📝 הפקת Word</button>
+      <button class="btn btn-clear" onclick="handleClear()">🗑️ ניקוי הטופס</button>
+    </div>
+  </div>
+
+</div><!-- /page-wrapper -->
+
+<!-- ======================================================
+     פוטר חברה — עדין
+     ====================================================== -->
+<footer class="company-footer">
+  <div class="company-footer-inner">
+    <div class="company-initials">DH</div>
+    <div class="company-details">
+      <div class="company-name">חנציס דוד, ניהול והשקעות בע"מ</div>
+      <div class="company-address">בויאר 14, תל אביב 69127</div>
+      <div class="company-contacts">
+        טלפון: 03-6421440 &nbsp;|&nbsp; נייד: 052-8571718 &nbsp;|&nbsp; פקס: 03-6416920
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- ======================================================
+     JavaScript
+     ====================================================== -->
+<script>
+/* ============================================================
+   הגדרות קורסים — לעריכה קלה
+   כדי להוסיף קורס: הוסף אובייקט { name, price } לרשימה
+   כדי לשנות מחיר לקורס ספציפי: שנה את price שלו
+   ============================================================ */
+const COURSES = [
+  { name: "מדעי הפיזיקה בצבע, תנועה וצליל", price: 3000 },
+  { name: "גאווה ישראלית",                   price: 3000 },
+  { name: "מדברים עם בינה מלאכותית",         price: 3000 },
+  { name: "בישול מולקולרי",                   price: 3000 },
+  { name: "אקולוגיה וסביבה",                  price: 3000 },
+  { name: "חינוך פיננסי",                     price: 3000 },
+  { name: "חוק וצדק",                         price: 3000 },
+  { name: "שביל ישראל",                       price: 3000 },
+  { name: "ביומימיקרי",                       price: 3000 },
+  { name: "סיפורי המיתולוגיה היוונית",        price: 3000 },
+  { name: "זואולוגיה - חלק א'",                price: 3000 },
+  { name: "זואולוגיה - חלק ב'",                price: 3000 },
+  { name: "זואולוגיה - חלק ג'",                price: 3000 },
+  { name: "פיתוח מיומנויות וכישורים לחיים - חצי שנתי (15 שיעורים)", price: 3000 },
+  { name: "פיתוח מיומנויות וכישורים לחיים - שנתי (30 שיעורים)",     price: 6000 }
+];
+
+/* ===== כתובת מייל ופקס — לעריכה קלה ===== */
+const CONTACT_EMAIL = "mekuvanim@gmail.com";
+const CONTACT_FAX   = "03-6416920";
+
+/* ===== תנאי הפעלה — לעריכה קלה ===== */
+const TERMS_TEXT = `התכנית תפעל בבית הספר החל מיום 01/09/2026 ועד סוף שנת הלימודים תשפ"ז, ללא הגבלת תלמידים.
+להפעלת הקורס בכיתה נדרש מחשב ומקרן.
+הקורס הינו קורס דיגיטלי. הפעלת הקורס תיעשה על ידי מורה מבית הספר.
+צוות "חטיפי למידה" מחויבים לספק את הסביבה הדיגיטלית עם כל חומרי הלימוד, וכן ליווי והנחייה ככל שיידרשו לצוותי ההוראה.`;
+
+/* ============================================================
+   אתחול
+   ============================================================ */
+document.addEventListener('DOMContentLoaded', () => {
+  // ברירת מחדל: תאריך היום
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('orderDate').value = today;
+  document.getElementById('approvalDate').value = today;
+
+  // סנכרון שם מנהל/ת לאזור האישור
+  document.getElementById('principalName').addEventListener('input', function() {
+    const approvalField = document.getElementById('approvalPrincipal');
+    if (!approvalField._manuallyEdited) {
+      approvalField.value = this.value;
+    }
+  });
+  document.getElementById('approvalPrincipal').addEventListener('input', function() {
+    this._manuallyEdited = true;
+  });
+
+  renderCourses();
+  updateSummary();
+});
+
+/* ============================================================
+   בניית כרטיסי קורסים
+   ============================================================ */
+function renderCourses() {
+  const grid = document.getElementById('coursesGrid');
+  grid.innerHTML = '';
+  COURSES.forEach((course, i) => {
+    const card = document.createElement('div');
+    card.className = 'course-card';
+    card.dataset.index = i;
+    card.setAttribute('role', 'checkbox');
+    card.setAttribute('aria-checked', 'false');
+    card.setAttribute('tabindex', '0');
+    card.innerHTML = `
+      <div class="course-checkbox-custom" aria-hidden="true"></div>
+      <div class="course-info">
+        <div class="course-name">${course.name}</div>
+      </div>`;
+    card.addEventListener('click', () => toggleCourse(card));
+    card.addEventListener('keydown', e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); toggleCourse(card); } });
+    grid.appendChild(card);
+  });
+}
+
+function toggleCourse(card) {
+  card.classList.toggle('selected');
+  const checked = card.classList.contains('selected');
+  card.setAttribute('aria-checked', checked);
+  updateSummary();
+}
+
+/* ============================================================
+   עדכון סיכום
+   ============================================================ */
+function updateSummary() {
+  const selected = getSelectedCourses();
+  const empty  = document.getElementById('summaryEmpty');
+  const content = document.getElementById('summaryContent');
+  const list   = document.getElementById('summaryList');
+  const count  = document.getElementById('summaryCount');
+  const total  = document.getElementById('summaryTotal');
+
+  if (selected.length === 0) {
+    empty.style.display = 'block';
+    content.style.display = 'none';
+    return;
+  }
+
+  empty.style.display = 'none';
+  content.style.display = 'block';
+  count.textContent = `נבחרו ${selected.length} קורסים`;
+
+  list.innerHTML = '';
+  selected.forEach(course => {
+    const li = document.createElement('li');
+    li.innerHTML = `<span>${course.name}</span><span>${course.price.toLocaleString('he-IL')} ש"ח</span>`;
+    list.appendChild(li);
+  });
+
+  const totalAmount = selected.reduce((sum, course) => sum + course.price, 0);
+  total.textContent = `${totalAmount.toLocaleString('he-IL')} ש"ח כולל מע"מ`;
+}
+
+function getSelectedCourses() {
+  const cards = document.querySelectorAll('.course-card.selected');
+  return Array.from(cards).map(c => COURSES[+c.dataset.index]);
+}
+
+/* ============================================================
+   ולידציה
+   ============================================================ */
+function validate() {
+  let valid = true;
+  const errors = [];
+
+  const fields = [
+    { id: 'schoolName',   errId: 'err-schoolName',   label: 'שם בית הספר' },
+    { id: 'schoolSymbol', errId: 'err-schoolSymbol', label: 'סמל מוסד' },
+    { id: 'principalName',errId: 'err-principalName',label: 'שם מנהל/ת' },
+    { id: 'orderDate',    errId: null,               label: 'תאריך' }
+  ];
+
+  fields.forEach(f => {
+    const el = document.getElementById(f.id);
+    const err = f.errId ? document.getElementById(f.errId) : null;
+    if (!el.value.trim()) {
+      valid = false;
+      errors.push(f.label);
+      el.classList.add('error-field');
+      if (err) err.classList.add('visible');
+    } else {
+      el.classList.remove('error-field');
+      if (err) err.classList.remove('visible');
+    }
+  });
+
+  const selected = getSelectedCourses();
+  if (selected.length === 0) {
+    valid = false;
+    errors.push('בחירת קורס אחד לפחות');
+  }
+
+  const globalError = document.getElementById('globalError');
+  if (!valid) {
+    globalError.innerHTML = `<strong>נא להשלים את השדות הבאים לפני ההמשך:</strong><br>• ${errors.join('<br>• ')}`;
+    globalError.classList.add('visible');
+    globalError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  } else {
+    globalError.classList.remove('visible');
+  }
+
+  return valid;
+}
+
+/* ============================================================
+   פורמט תאריך DD/MM/YYYY
+   ============================================================ */
+function formatDate(dateStr) {
+  if (!dateStr) return '';
+  const [y, m, d] = dateStr.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+/* ============================================================
+   בניית מסמך מעוצב — inline styles, A4 אחד, יפה
+   משמש את: print-area, PDF, Word, preview
+   ============================================================ */
+function buildDocHTML() {
+  const selected = getSelectedCourses();
+  const date     = document.getElementById('orderDate').value;
+  const displayDate = date ? formatDate(date) : '';
+
+  const approvalDateVal = document.getElementById('approvalDate').value;
+  const approvalDisplayDate = approvalDateVal ? formatDate(approvalDateVal) : displayDate;
+  const approvalPrincipal = document.getElementById('approvalPrincipal').value ||
+                            document.getElementById('principalName').value;
+
+  const totalAmount = selected.reduce((sum, course) => sum + course.price, 0);
+
+  // ---- פרטי בית הספר בשתי עמודות ----
+  const schoolFields = [
+    ['שם בית הספר', document.getElementById('schoolName').value],
+    ['סמל מוסד',    document.getElementById('schoolSymbol').value],
+    ['שם מנהל/ת',  document.getElementById('principalName').value],
+    document.getElementById('ordererRole').value ? ['תפקיד המזמין/ה', document.getElementById('ordererRole').value] : null,
+    document.getElementById('phone').value       ? ['טלפון',           document.getElementById('phone').value]       : null,
+    document.getElementById('email').value       ? ['דוא"ל',           document.getElementById('email').value]       : null,
+    document.getElementById('city').value        ? ['עיר / רשות',      document.getElementById('city').value]        : null,
+  ].filter(Boolean);
+
+  const S = { // style shortcuts
+    dlCell: `style="font-weight:700;color:#1a5276;padding:5px 8px;border-bottom:1px solid #dde;font-size:10pt;white-space:nowrap;width:18%;"`,
+    dvCell: `style="padding:5px 8px;border-bottom:1px solid #dde;font-size:10pt;width:30%;"`,
+    dlCellR: `style="font-weight:700;color:#1a5276;padding:5px 8px 5px 16px;border-bottom:1px solid #dde;font-size:10pt;white-space:nowrap;width:18%;"`,
+  };
+
+  const schoolRows = [];
+  for (let i = 0; i < schoolFields.length; i += 2) {
+    const L = schoolFields[i], R = schoolFields[i+1];
+    schoolRows.push(`<tr>
+      <td ${S.dlCell}>${L[0]}:</td><td ${S.dvCell}>${esc(L[1])}</td>
+      ${R ? `<td ${S.dlCellR}>${R[0]}:</td><td ${S.dvCell}>${esc(R[1])}</td>` : '<td></td><td></td>'}
+    </tr>`);
+  }
+
+  // ---- קורסים ברשימה נקייה ----
+  const courseRows = [];
+  selected.forEach((course, i) => {
+    const evenBg = i % 2 === 1 ? 'background:#eef4fa;color:#000000;' : 'background:#ffffff;color:#000000;';
+    courseRows.push(`<tr style="${evenBg}">
+      <td style="text-align:center;color:#000000;background:#eef4fa;font-weight:800;padding:5px 8px;border-bottom:1px solid #dde;font-size:10pt;width:32px;-webkit-print-color-adjust:exact;print-color-adjust:exact;">${i+1}</td>
+      <td style="padding:5px 12px;border-bottom:1px solid #dde;font-size:10pt;color:#000000;font-weight:700;">${esc(course.name)}</td>
+    </tr>`);
+  });
+
+  // ---- תנאי הפעלה — משפטים ----
+  const termsItems = TERMS_TEXT.split('\n').filter(l => l.trim());
+
+  return `
+<!-- ===== HEADER ===== -->
+<div style="background:#f4f8fb;border-bottom:3px solid #1a5276;border-radius:6px;padding:14px 24px 12px;margin-bottom:10px;text-align:center;direction:rtl;">
+  <img src="data:image/jpeg;base64,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" alt="חטיפי למידה" style="max-height:18px;margin-bottom:10px;display:block;margin-left:auto;margin-right:auto;">
+  <div style="font-size:16pt;font-weight:900;color:#1a5276;letter-spacing:1px;margin-bottom:4px;">הצעת מחיר</div>
+  <div style="font-size:13pt;font-weight:600;color:#444444;line-height:1.15;margin-bottom:5px;">הזמנת קורסים דיגיטליים</div>
+  <div style="font-size:8.5pt;color:#555555;font-weight:500;">תאריך הזמנה: ${displayDate}</div>
+</div>
+
+<!-- ===== פרטי בית הספר ===== -->
+<div style="font-size:10.5pt;font-weight:700;color:#1a5276;border-bottom:2px solid #2e86c1;padding-bottom:4px;margin-bottom:6px;display:flex;align-items:center;gap:6px;">🏫 פרטי בית הספר</div>
+<table style="width:100%;border-collapse:collapse;margin-bottom:8px;font-size:10pt;">
+  ${schoolRows.join('')}
+</table>
+
+<!-- ===== קורסים ===== -->
+<div style="font-size:10.5pt;font-weight:700;color:#1a5276;border-bottom:2px solid #2e86c1;padding-bottom:4px;margin-bottom:6px;display:flex;align-items:center;gap:6px;">🎓 קורסים שנבחרו</div>
+<table style="width:100%;border-collapse:collapse;margin-bottom:8px;border:1px solid #dde;border-radius:6px;overflow:hidden;">
+  <thead>
+    <tr style="background:#1a5276;">
+      <th style="color:#000000;background:#dce8f3;padding:5px 8px;text-align:center;font-size:10pt;width:32px;font-weight:700;-webkit-print-color-adjust:exact;print-color-adjust:exact;">#</th>
+      <th style="color:#000000;background:#dce8f3;padding:5px 12px;text-align:right;font-size:10pt;font-weight:700;-webkit-print-color-adjust:exact;print-color-adjust:exact;">שם הקורס</th>
+    </tr>
+  </thead>
+  <tbody>${courseRows.join('')}</tbody>
+</table>
+
+<!-- ===== סיכום כמות ומחיר ===== -->
+<div style="background:#f0f6fb;border:1.5px solid #2e86c1;border-radius:6px;padding:6px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">
+  <span style="font-size:10.5pt;font-weight:700;color:#1a5276;">${selected.length} קורסים נבחרו</span>
+  <span style="font-size:11pt;font-weight:800;color:#1a5276;">סה"כ: ${totalAmount.toLocaleString('he-IL')} ש"ח כולל מע"מ</span>
+</div>
+
+<!-- ===== תנאים ===== -->
+<div style="font-size:10.5pt;font-weight:700;color:#1a5276;border-bottom:2px solid #2e86c1;padding-bottom:4px;margin-bottom:6px;display:flex;align-items:center;gap:6px;">📋 תנאי ההזמנה וההפעלה</div>
+<div style="background:#fafbfc;border-right:3px solid #2e86c1;border-radius:0 4px 4px 0;padding:7px 12px;margin-bottom:8px;font-size:9.5pt;line-height:1.6;color:#1c2833;">
+  ${termsItems.map((t,i) => `${i>0?'<br>':''}${t}`).join('')}
+</div>
+
+<!-- ===== הנחיות ===== -->
+<div style="background:#eaf6fb;border:1.5px solid #a9cce3;border-radius:6px;padding:7px 14px;margin-bottom:8px;font-size:9.5pt;line-height:1.6;color:#1c2833;">
+  לאחר מילוי הטופס יש להדפיסו, לחתום ידנית, להוסיף חותמת בית ספר ולשלוח אלינו.<br>
+  <span style="display:inline-block;margin-top:6px;"><strong>מייל:</strong> ${CONTACT_EMAIL}</span>
+  &nbsp;&nbsp;&nbsp;
+  <span style="display:inline-block;"><strong>פקס:</strong> ${CONTACT_FAX}</span><br>
+  <span style="display:inline-block;margin-top:4px;">* לשאלות: <strong>050-5274030</strong></span><br>
+  <span style="display:inline-block;">* לצורך דיווח במערכת גפ"ן — אנא פנו אלינו לקבלת הנחיות</span>
+</div>
+
+<!-- ===== אישור ===== -->
+<div style="margin-top:4px;">
+  <div style="font-size:10.5pt;font-weight:700;color:#1a5276;border-bottom:2px solid #2e86c1;padding-bottom:4px;margin-bottom:8px;">✍️ אישור ההזמנה</div>
+  <div style="font-size:9.5pt;margin-bottom:8px;color:#333;">אני מאשר/ת את פרטי ההזמנה כמפורט לעיל.</div>
+  <table style="width:100%;border-collapse:collapse;">
+    <tr>
+      <td style="width:25%;padding-left:12px;vertical-align:bottom;">
+        <div style="font-size:9.5pt;color:#5d6d7e;margin-bottom:3px;font-weight:600;">תאריך</div>
+        <div style="font-size:11pt;font-weight:700;color:#1c2833;padding-bottom:4px;">${approvalDisplayDate}</div>
+        <div style="border-bottom:1.5px solid #333;"></div>
+      </td>
+      <td style="width:25%;padding-left:12px;vertical-align:bottom;">
+        <div style="font-size:9.5pt;color:#5d6d7e;margin-bottom:3px;font-weight:600;">שם מנהל/ת</div>
+        <div style="font-size:11pt;font-weight:700;color:#1c2833;padding-bottom:4px;">${esc(approvalPrincipal)}</div>
+        <div style="border-bottom:1.5px solid #333;"></div>
+      </td>
+      <td style="width:25%;padding-left:12px;vertical-align:bottom;">
+        <div style="font-size:9.5pt;color:#5d6d7e;margin-bottom:3px;font-weight:600;">חתימה</div>
+        <div style="min-height:28px;border-bottom:1.5px solid #333;"></div>
+      </td>
+      <td style="width:25%;vertical-align:bottom;">
+        <div style="font-size:9.5pt;color:#5d6d7e;margin-bottom:3px;font-weight:600;">חותמת בית הספר</div>
+        <div style="min-height:28px;border-bottom:1.5px solid #333;"></div>
+      </td>
+    </tr>
+  </table>
+</div>
+
+<!-- ===== פוטר חברה ===== -->
+<div style="margin-top:8px;padding-top:6px;border-top:1px solid #d5dbdb;display:flex;align-items:center;gap:14px;direction:rtl;">
+  <div style="font-size:13pt;font-weight:900;color:#c0b090;letter-spacing:2px;border:1.5px solid #c0b090;padding:4px 8px;border-radius:3px;font-family:Georgia,serif;flex-shrink:0;line-height:1;">DH</div>
+  <div style="font-size:9pt;color:#7f8c8d;line-height:1.7;">
+    <span style="font-weight:600;color:#5d6d7e;">חנציס דוד, ניהול והשקעות בע"מ</span><br>
+    בויאר 14, תל אביב 69127 &nbsp;|&nbsp; טלפון: 03-6421440 &nbsp;|&nbsp; נייד: 052-8571718 &nbsp;|&nbsp; פקס: 03-6416920
+  </div>
+</div>`;
+}
+
+function esc(str) {
+  return String(str)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;');
+}
+
+/* ============================================================
+   תצוגה מקדימה
+   ============================================================ */
+function handlePreview() {
+  if (!validate()) return;
+  document.getElementById('previewContent').innerHTML = buildDocHTML();
+  document.getElementById('previewModal').classList.add('open');
+}
+
+function closePreview() {
+  document.getElementById('previewModal').classList.remove('open');
+}
+
+// סגירה בלחיצה מחוץ למודל
+document.getElementById('previewModal').addEventListener('click', e => {
+  if (e.target === document.getElementById('previewModal')) closePreview();
+});
+
+/* ============================================================
+   הדפסה
+   ============================================================ */
+function handlePrint() {
+  if (!validate()) return;
+
+  const printArea = document.getElementById('print-area');
+  printArea.innerHTML = buildDocHTML();
+
+  // הוסף סגנונות inline לטבלאות שמסתמכים על CSS classes
+  injectPrintStyles();
+
+  window.print();
+}
+
+function injectPrintStyles() {
+  // הסגנונות כבר מוגדרים ב-@media print בראש הדף
+  // פונקציה זו קיימת לצורך הרחבה עתידית
+}
+
+/* ============================================================
+   הפקת PDF
+   ============================================================ */
+async function handlePDF() {
+  if (!validate()) return;
+
+  const iframe = document.createElement('iframe');
+  iframe.style.cssText = 'position:fixed;top:-9999px;right:-9999px;width:794px;border:none;height:1123px;';
+  document.body.appendChild(iframe);
+
+  const docHTML = `<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    width: 794px;
+    direction: rtl;
+    font-family: 'Arial Hebrew', Arial, sans-serif;
+    color: #1c2833;
+    background: white;
+  }
+  body { padding: 28px 32px; }
+</style>
+</head>
+<body>${buildDocHTML()}</body>
+</html>`;
+
+  iframe.contentDocument.open();
+  iframe.contentDocument.write(docHTML);
+  iframe.contentDocument.close();
+
+  await new Promise(r => setTimeout(r, 400));
+
+  try {
+    const body = iframe.contentDocument.body;
+    const contentH = body.scrollHeight;
+
+    // A4: 794px wide, 1123px tall at 96dpi
+    const A4_H = 1123;
+    const scale = contentH > A4_H ? A4_H / contentH : 1;
+
+    const canvas = await html2canvas(body, {
+      scale: 2,
+      useCORS: true,
+      width: 794,
+      height: contentH,
+      windowWidth: 794,
+      windowHeight: contentH,
+      backgroundColor: '#ffffff'
+    });
+
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+    const imgData = canvas.toDataURL('image/jpeg', 0.95);
+    // fit entire canvas into one A4 page
+    const pdfW = 210;
+    const pdfH = Math.min(297, (canvas.height / canvas.width) * pdfW);
+    pdf.addImage(imgData, 'JPEG', 0, 0, pdfW, pdfH);
+
+    const schoolName = document.getElementById('schoolName').value.trim() || 'הזמנה';
+    pdf.save(`הזמנת קורסים - ${schoolName}.pdf`);
+  } catch (err) {
+    alert('אירעה שגיאה בהפקת ה-PDF. אנא נסו להדפיס ישירות.');
+    console.error(err);
+  } finally {
+    document.body.removeChild(iframe);
+  }
+}
+
+/* ============================================================
+   הפקת Word (HTML שנפתח ב-Word)
+   ============================================================ */
+function handleWord() {
+  if (!validate()) return;
+
+  const schoolName = document.getElementById('schoolName').value.trim() || 'הזמנה';
+
+  const wordDoc = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+<meta charset="UTF-8">
+<meta name="ProgId" content="Word.Document">
+<xml><w:WordDocument><w:View>Print</w:View><w:DoNotOptimizeForBrowser/></w:WordDocument></xml>
+<style>
+  body { direction: rtl; font-family: 'Arial Hebrew', Arial, sans-serif; margin: 1.5cm 2cm; }
+  * { box-sizing: border-box; }
+</style>
+</head>
+<body>${buildDocHTML()}</body>
+</html>`;
+
+  const blob = new Blob([wordDoc], { type: 'application/msword;charset=utf-8' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url;
+  a.download = `הזמנת קורסים - ${schoolName}.doc`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+/* ============================================================
+   ניקוי טופס
+   ============================================================ */
+function handleClear() {
+  if (!confirm('האם אתה בטוח שברצונך לנקות את כל הפרטים?')) return;
+
+  ['schoolName','schoolSymbol','principalName','ordererRole','phone','email','city'].forEach(id => {
+    document.getElementById(id).value = '';
+    document.getElementById(id).classList.remove('error-field');
+  });
+
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('orderDate').value = today;
+  document.getElementById('approvalDate').value = today;
+  document.getElementById('approvalPrincipal').value = '';
+  document.getElementById('approvalPrincipal')._manuallyEdited = false;
+
+  document.querySelectorAll('.course-card.selected').forEach(c => {
+    c.classList.remove('selected');
+    c.setAttribute('aria-checked', 'false');
+  });
+
+  document.querySelectorAll('.field-error').forEach(e => e.classList.remove('visible'));
+  document.getElementById('globalError').classList.remove('visible');
+
+  updateSummary();
+}
+</script>
+</body>
+</html>
