@@ -803,6 +803,247 @@
       .actions-area { flex-direction: column; align-items: stretch; }
       .btn { justify-content: center; }
     }
+
+    /* ======================================================
+       חתימה דיגיטלית, שליחה והורדה
+       ====================================================== */
+    input[readonly] {
+      background: #eef1f4;
+      color: var(--color-text-muted);
+      cursor: default;
+    }
+    input[readonly]:focus {
+      box-shadow: none;
+      border-color: var(--color-border);
+      background: #eef1f4;
+    }
+
+    .sign-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px 24px;
+      margin-bottom: 18px;
+    }
+
+    .auth-check {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      font-size: 0.93rem;
+      line-height: 1.6;
+      font-weight: 500;
+      color: var(--color-text);
+      cursor: pointer;
+      padding: 13px 15px;
+      border: 1.5px solid var(--color-border);
+      border-radius: 8px;
+      background: #fafbfc;
+    }
+    .auth-check input {
+      width: 20px;
+      height: 20px;
+      margin-top: 3px;
+      accent-color: var(--color-primary);
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+    .auth-check.error-field {
+      border-color: var(--color-error);
+      background: #fff5f5;
+    }
+
+    .sign-box {
+      margin-top: 18px;
+      border: 2px dashed var(--color-secondary);
+      border-radius: 10px;
+      padding: 20px 18px;
+      text-align: center;
+      background: #f7fbfe;
+    }
+    .sign-box.signed {
+      border-style: solid;
+      border-color: var(--color-success);
+      background: #f4fbf6;
+    }
+    .sign-box.error-field {
+      border-color: var(--color-error);
+      background: #fff5f5;
+    }
+    .sign-preview {
+      display: inline-block;
+      max-width: 100%;
+      max-height: 110px;
+      width: auto;
+      height: auto;
+      background: #fff;
+      border-bottom: 1.5px solid #333;
+      padding: 6px 22px 2px;
+    }
+    .sign-meta {
+      font-size: 0.9rem;
+      color: var(--color-text);
+      margin-top: 12px;
+      line-height: 1.8;
+    }
+    .sign-note {
+      font-size: 0.83rem;
+      color: var(--color-text-muted);
+      margin-top: 12px;
+      line-height: 1.6;
+    }
+    .sign-notice {
+      display: none;
+      margin-top: 14px;
+      background: var(--color-accent-light);
+      border: 1.5px solid #f0c040;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 0.9rem;
+      color: #7d5a00;
+    }
+
+    .btn-sign { background: var(--color-secondary); color: #fff; font-size: 1.02rem; padding: 13px 30px; }
+    .btn-sign:hover { background: #2471a3; transform: translateY(-1px); }
+
+    .btn-send {
+      background: var(--color-primary);
+      color: #fff;
+      font-size: 1.1rem;
+      padding: 15px 44px;
+      box-shadow: 0 4px 14px rgba(26,82,118,0.25);
+    }
+    .btn-send:hover:not(:disabled) {
+      background: #154360;
+      box-shadow: 0 6px 20px rgba(26,82,118,0.35);
+      transform: translateY(-1px);
+    }
+
+    .btn-share { background: var(--color-success); color: #fff; }
+    .btn-share:hover { background: #196f3d; transform: translateY(-1px); }
+
+    .btn-outline {
+      background: #fff;
+      color: var(--color-primary);
+      border: 1.5px solid var(--color-primary);
+    }
+    .btn-outline:hover { background: var(--color-selected-bg); transform: translateY(-1px); }
+
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important; }
+    .btn:focus-visible, .auth-check input:focus-visible, .modal-close:focus-visible {
+      outline: 3px solid rgba(46,134,193,0.55);
+      outline-offset: 2px;
+    }
+
+    .actions-primary { display: flex; justify-content: center; margin: 4px 0 6px; }
+
+    .secondary-actions-title {
+      font-size: 0.85rem;
+      color: var(--color-text-muted);
+      text-align: center;
+      margin: 26px 0 12px;
+    }
+
+    .status-box {
+      display: none;
+      margin-top: 16px;
+      border-radius: 10px;
+      padding: 16px 20px;
+      font-size: 0.95rem;
+      line-height: 1.7;
+    }
+    .status-box.visible { display: block; }
+    .status-box.sending,
+    .status-box.info { background: #eaf4fb; border: 1.5px solid #a9cce3; color: var(--color-primary); }
+    .status-box.sending.visible { display: flex; align-items: center; gap: 12px; }
+    .status-box.success { background: #eafaf1; border: 1.5px solid #27ae60; color: #1a6b3a; }
+    .status-box.failure { background: #fdf0ef; border: 1.5px solid var(--color-error); color: #922b21; }
+    .status-title { font-weight: 800; font-size: 1.05rem; margin-bottom: 4px; }
+    .status-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+
+    .spinner {
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+      border: 3px solid #a9cce3;
+      border-top-color: var(--color-primary);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 3s; } }
+
+    /* שדה מלכודת לרובוטים — מוסתר מבני אדם */
+    .hp-field {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      margin: -1px;
+      padding: 0;
+      border: 0;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      opacity: 0;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+    #signCard { position: relative; }
+
+    /* חלון החתימה */
+    .sig-modal-box { max-width: 640px; }
+    .sig-signer { font-size: 0.93rem; color: var(--color-text-muted); margin-bottom: 12px; }
+    .sig-pad-wrap {
+      position: relative;
+      border: 2px solid var(--color-secondary);
+      border-radius: 10px;
+      background: #fff;
+      touch-action: none;
+    }
+    .sig-pad-wrap canvas {
+      display: block;
+      width: 100%;
+      height: 220px;
+      border-radius: 8px;
+      touch-action: none;
+      cursor: crosshair;
+    }
+    .sig-baseline {
+      position: absolute;
+      left: 20px;
+      right: 20px;
+      bottom: 46px;
+      border-bottom: 1.5px dashed #b8c4ce;
+      pointer-events: none;
+    }
+    .sig-placeholder {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #9aa7b2;
+      font-size: 1.15rem;
+      pointer-events: none;
+    }
+    .sig-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+    .sig-actions .group { display: flex; gap: 10px; flex-wrap: wrap; }
+
+    @media (max-width: 640px) {
+      .sign-grid { grid-template-columns: 1fr; }
+      .sig-modal-body { padding: 18px 16px; }
+      .sig-pad-wrap canvas { height: 200px; }
+      .sig-actions, .sig-actions .group { flex-direction: column; align-items: stretch; }
+      .sig-actions .btn { justify-content: center; }
+      .btn-send { width: 100%; justify-content: center; padding: 15px 20px; }
+      .actions-primary { display: block; }
+      .status-actions { flex-direction: column; align-items: stretch; }
+    }
   </style>
 </head>
 <body>
@@ -826,6 +1067,34 @@
 </div>
 
 <!-- ======================================================
+     חלון חתימה
+     ====================================================== -->
+<div class="modal-overlay" id="signModal" role="dialog" aria-modal="true" aria-labelledby="signModalTitle">
+  <div class="modal-box sig-modal-box">
+    <div class="modal-header">
+      <h2 id="signModalTitle">חתימה על ההזמנה</h2>
+      <button type="button" class="modal-close" onclick="closeSignature()" aria-label="סגור">✕</button>
+    </div>
+    <div class="modal-body sig-modal-body">
+      <p class="sig-signer" id="sigSignerLine"></p>
+      <div class="sig-pad-wrap">
+        <canvas id="sigCanvas" aria-label="אזור חתימה. חתמו באצבע או בעכבר"></canvas>
+        <div class="sig-baseline"></div>
+        <div class="sig-placeholder" id="sigPlaceholder">חתמו כאן</div>
+      </div>
+      <span class="field-error" id="err-sigPad" style="margin-top:8px;">החתימה קצרה מדי. נא לחתום בתוך המסגרת.</span>
+      <div class="sig-actions">
+        <button type="button" class="btn btn-clear" onclick="clearSigPad()">🧹 ניקוי</button>
+        <div class="group">
+          <button type="button" class="btn btn-clear" onclick="closeSignature()">ביטול</button>
+          <button type="button" class="btn btn-send" id="btnConfirmSign" onclick="confirmSignature()" style="font-size:1rem;padding:12px 28px;">אישור חתימה</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ======================================================
      דף הטופס הראשי
      ====================================================== -->
 <div class="page-wrapper">
@@ -838,7 +1107,7 @@
     <img src="data:image/jpeg;base64,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" alt="חטיפי למידה" style="max-height:80px; margin-bottom:14px; display:block; margin-left:auto; margin-right:auto;">
 
     <h1>הצעת מחיר - הזמנת קורסים דיגיטליים</h1>
-    <p class="subtitle">מלאו את פרטי ההזמנה, בחרו את הקורסים הרצויים, הפיקו את הטופס או הדפיסו אותו ישירות, חתמו ידנית ושלחו אלינו במייל או בפקס.</p>
+    <p class="subtitle">מלאו את פרטי ההזמנה, בחרו את הקורסים הרצויים וחתמו על המסך. ההזמנה נשלחת אלינו ישירות, ועותק חתום מגיע אליכם למייל.</p>
 
   </div>
 
@@ -879,8 +1148,9 @@
         <input type="tel" id="phone" placeholder="050-0000000">
       </div>
       <div class="form-group">
-        <label for="email">כתובת דוא״ל</label>
-        <input type="email" id="email" placeholder="example@school.edu.il">
+        <label for="email">כתובת דוא״ל <span class="required-star">*</span></label>
+        <input type="email" id="email" placeholder="example@school.edu.il" autocomplete="email">
+        <span class="field-error" id="err-email">נא להזין כתובת דוא״ל תקינה. אליה יישלח עותק ההזמנה החתומה.</span>
       </div>
       <div class="form-group">
         <label for="city">עיר / רשות מקומית</label>
@@ -926,37 +1196,64 @@
     </div>
   </div>
 
-  <!-- אזור אישור -->
-  <div class="card">
-    <div class="card-title"><span class="icon">✍️</span> אישור ההזמנה</div>
-    <p style="font-size:0.93rem;margin-bottom:20px;color:var(--color-text);">אני מאשר/ת את פרטי ההזמנה כמפורט לעיל.</p>
-    <div class="approval-grid">
-      <div class="approval-field">
-        <label class="approval-label" for="approvalDate">תאריך</label>
-        <input type="date" id="approvalDate" style="border:1.5px solid var(--color-border);border-radius:7px;padding:9px 12px;font-size:0.95rem;font-family:var(--font-main);background:#fafbfc;width:100%;">
+  <!-- אישור וחתימה -->
+  <div class="card" id="signCard">
+    <div class="card-title"><span class="icon">✍️</span> אישור וחתימה</div>
+    <p style="font-size:0.93rem;margin-bottom:18px;color:var(--color-text);">אני מאשר/ת את פרטי ההזמנה כמפורט לעיל.</p>
+
+    <div class="sign-grid">
+      <div class="form-group">
+        <label for="signSchoolName">שם בית הספר</label>
+        <input type="text" id="signSchoolName" readonly tabindex="-1" placeholder="יתמלא אוטומטית מהפרטים שלמעלה">
       </div>
-      <div class="approval-field">
-        <label class="approval-label" for="approvalPrincipal">שם מנהל/ת</label>
-        <input type="text" id="approvalPrincipal" placeholder="שם מלא" style="border:1.5px solid var(--color-border);border-radius:7px;padding:9px 12px;font-size:0.95rem;font-family:var(--font-main);background:#fafbfc;width:100%;">
+      <div class="form-group">
+        <label for="signSchoolSymbol">סמל מוסד</label>
+        <input type="text" id="signSchoolSymbol" readonly tabindex="-1" placeholder="יתמלא אוטומטית מהפרטים שלמעלה">
       </div>
-      <div class="approval-field">
-        <div class="approval-label">חתימה</div>
-        <div class="approval-line"></div>
-        <div style="font-size:0.78rem;color:var(--color-text-muted);">* יש לחתום ידנית לאחר הדפסה</div>
+      <div class="form-group">
+        <label for="signerName">שם החותם/ת <span class="required-star">*</span></label>
+        <input type="text" id="signerName" placeholder="שם מלא" autocomplete="name">
+        <span class="field-error" id="err-signerName">נא להזין את שם החותם/ת</span>
       </div>
-      <div class="approval-field">
-        <div class="approval-label">חותמת בית הספר</div>
-        <div class="approval-line"></div>
-        <div style="font-size:0.78rem;color:var(--color-text-muted);">* יש להטביע חותמת לאחר הדפסה</div>
+      <div class="form-group">
+        <label for="signerRole">תפקיד החותם/ת <span class="required-star">*</span></label>
+        <input type="text" id="signerRole" placeholder="לדוגמה: מנהל/ת">
+        <span class="field-error" id="err-signerRole">נא להזין את תפקיד החותם/ת</span>
       </div>
+    </div>
+
+    <label class="auth-check" id="authBox">
+      <input type="checkbox" id="authConfirm">
+      <span>אני מאשר/ת שהפרטים נכונים ושאני מוסמך/ת לחתום בשם בית הספר.</span>
+    </label>
+    <span class="field-error" id="err-authConfirm">יש לסמן את תיבת האישור לפני החתימה</span>
+
+    <div class="sign-box" id="signBox">
+      <div id="signEmpty">
+        <button type="button" class="btn btn-sign" onclick="openSignature()">✍️ לחתימה</button>
+        <div class="sign-note">החתימה נעשית באצבע (בטלפון) או בעכבר (במחשב). התאריך והשעה נרשמים אוטומטית בעת החתימה.</div>
+      </div>
+      <div id="signDone" style="display:none;">
+        <img class="sign-preview" id="signPreviewImg" alt="החתימה שלכם">
+        <div class="sign-meta" id="signMeta"></div>
+        <div style="margin-top:12px;"><button type="button" class="btn btn-outline" onclick="openSignature()">חתימה מחדש</button></div>
+      </div>
+    </div>
+    <span class="field-error" id="err-signature">יש לחתום על ההזמנה לפני השליחה</span>
+    <div class="sign-notice" id="signNotice" role="status"></div>
+
+    <div class="hp-field" aria-hidden="true">
+      <label for="hpWebsite">אתר אינטרנט</label>
+      <input type="text" id="hpWebsite" name="hp_url" tabindex="-1" autocomplete="off">
     </div>
   </div>
 
   <!-- הנחיות שליחה -->
   <div class="card">
-    <div class="card-title"><span class="icon">📨</span> הנחיות לאחר מילוי</div>
+    <div class="card-title"><span class="icon">📨</span> איך שולחים את ההזמנה</div>
     <div class="instructions-box">
-      לאחר מילוי הטופס יש להפיק את המסמך או להדפיסו ישירות, לחתום ידנית, להוסיף חותמת בית ספר, ולשלוח אלינו בחזרה במייל או בפקס.<br><br>
+      לאחר שמילאתם את הפרטים וחתמתם, לחצו על <strong>״שלח הזמנה״</strong>. ההזמנה החתומה תגיע אלינו ישירות, ועותק ממנה יישלח לכתובת הדוא״ל שהזנתם. אפשר גם להוריד את המסמך החתום ולשתף אותו.<br><br>
+      מעדיפים נייר? אפשר להדפיס את הטופס, לחתום ידנית ולשלוח אלינו:<br>
       <!-- ===== עדכון מייל: שנה את הכתובת בשורה הבאה ===== -->
       <strong>מייל:</strong> <a href="mailto:mekuvanim@gmail.com">mekuvanim@gmail.com</a><br>
       <!-- ===== עדכון פקס: שנה את המספר בשורה הבאה ===== -->
@@ -971,11 +1268,19 @@
 
   <!-- כפתורי פעולה -->
   <div class="card">
-    <div class="card-title"><span class="icon">⚡</span> פעולות</div>
+    <div class="card-title"><span class="icon">⚡</span> שליחה והפקה</div>
+
+    <div class="actions-primary">
+      <button type="button" class="btn btn-send" id="btnSend" onclick="handleSend()">📨 שלח הזמנה</button>
+    </div>
+    <div class="status-box" id="sendStatus" role="status" aria-live="polite"></div>
+
+    <div class="secondary-actions-title">אפשרויות נוספות</div>
     <div class="actions-area">
-      <button class="btn btn-print" onclick="handlePrint()">🖨️ הדפסה</button>
+      <button class="btn btn-pdf" id="btnPdf" onclick="handlePDF()">📄 הורדת PDF</button>
+      <button class="btn btn-share js-share" style="display:none;" onclick="handleShare()">📤 שיתוף</button>
       <button class="btn btn-preview" onclick="handlePreview()">👁️ תצוגה מקדימה</button>
-      <button class="btn btn-pdf" onclick="handlePDF()">📄 הפקת PDF</button>
+      <button class="btn btn-outline" onclick="handlePrint()">🖨️ הדפסה</button>
       <button class="btn btn-word" onclick="handleWord()">📝 הפקת Word</button>
       <button class="btn btn-clear" onclick="handleClear()">🗑️ ניקוי הטופס</button>
     </div>
@@ -1040,26 +1345,86 @@ const TERMS_TEXT = `התכנית תפעל בבית הספר החל מיום 01/0
 /* ============================================================
    אתחול
    ============================================================ */
+/* ============================================================
+   עזרים כלליים ומצב הטופס
+   ============================================================ */
+const $ = (id) => document.getElementById(id);
+const DEFAULT_SIGNER_ROLE = 'מנהל/ת';
+
+// אותה בדיקת כתובת דוא"ל כמו בשרת (כדי שלא תהיה סתירה ביניהם)
+const EMAIL_RE = /^[A-Za-z0-9._%+\-]+@[A-Za-z0-9\-]+(\.[A-Za-z0-9\-]+)*\.[A-Za-z]{2,}$/;
+
+let signature = null;   // החתימה שאושרה (או null)
+let formVersion = 0;    // עולה בכל שינוי בטופס או בחתימה, כדי לזהות קובץ PDF שמור שכבר לא מעודכן
+let sentOrder = null;   // הזמנה שנשלחה בהצלחה: { orderNo, version, customerCopy, email }
+let sending = false;
+
+// תאריך היום לפי השעון המקומי (ולא UTC)
+function todayLocal() {
+  const d = new Date();
+  const p = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+
+/* ============================================================
+   אתחול
+   ============================================================ */
 document.addEventListener('DOMContentLoaded', () => {
   // ברירת מחדל: תאריך היום
-  const today = new Date().toISOString().split('T')[0];
-  document.getElementById('orderDate').value = today;
-  document.getElementById('approvalDate').value = today;
+  $('orderDate').value = todayLocal();
 
-  // סנכרון שם מנהל/ת לאזור האישור
-  document.getElementById('principalName').addEventListener('input', function() {
-    const approvalField = document.getElementById('approvalPrincipal');
-    if (!approvalField._manuallyEdited) {
-      approvalField.value = this.value;
-    }
+  // אזור החתימה מתמלא אוטומטית מהפרטים שבראש הטופס
+  const principal = $('principalName');
+  const orderer = $('ordererRole');
+  const sName = $('signerName');
+  const sRole = $('signerRole');
+  sRole.value = DEFAULT_SIGNER_ROLE;
+
+  const mirror = () => {
+    $('signSchoolName').value = $('schoolName').value;
+    $('signSchoolSymbol').value = $('schoolSymbol').value;
+  };
+  $('schoolName').addEventListener('input', mirror);
+  $('schoolSymbol').addEventListener('input', mirror);
+
+  // שם ותפקיד החותם/ת: מתמלאים אוטומטית עד שהלקוח עורך אותם בעצמו
+  principal.addEventListener('input', () => { if (!sName._manual) sName.value = principal.value; });
+  orderer.addEventListener('input', () => {
+    if (!sRole._manual) sRole.value = orderer.value.trim() || DEFAULT_SIGNER_ROLE;
   });
-  document.getElementById('approvalPrincipal').addEventListener('input', function() {
-    this._manuallyEdited = true;
+  sName.addEventListener('input', () => { sName._manual = true; });
+  sRole.addEventListener('input', () => { sRole._manual = true; });
+
+  // כל שינוי בטופס אחרי החתימה מבטל אותה, כדי שהחתימה תמיד תתאים בדיוק למסמך שנשלח
+  const wrapper = document.querySelector('.page-wrapper');
+  wrapper.addEventListener('input', onFormChange);
+  wrapper.addEventListener('change', onFormChange);
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && $('signModal').classList.contains('open')) closeSignature();
   });
 
+  initShareButton();
+  initSignaturePad();
   renderCourses();
   updateSummary();
 });
+
+function onFormChange() {
+  formVersion++;
+  const hadSignature = !!signature;
+  if (signature) clearSignature();
+  if (sentOrder) {
+    sentOrder = null;
+    hideStatus();
+    refreshSendButton();
+  }
+  if (hadSignature) {
+    const note = $('signNotice');
+    note.textContent = 'בוצע שינוי בפרטי ההזמנה, ולכן יש לחתום מחדש.';
+    note.style.display = 'block';
+  }
+}
 
 /* ============================================================
    בניית כרטיסי קורסים
@@ -1090,6 +1455,7 @@ function toggleCourse(card) {
   const checked = card.classList.contains('selected');
   card.setAttribute('aria-checked', checked);
   updateSummary();
+  onFormChange();
 }
 
 /* ============================================================
@@ -1132,16 +1498,23 @@ function getSelectedCourses() {
 /* ============================================================
    ולידציה
    ============================================================ */
-function validate() {
+function validate(level = 0) {
+  // level 0 = בדיקה בסיסית (תצוגה, הדפסה, PDF, Word)
+  // level 1 = לפני חתימה (מוסיף: שם ותפקיד חותם, תיבת אישור)
+  // level 2 = לפני שליחה (מוסיף: חתימה)
   let valid = true;
   const errors = [];
 
   const fields = [
-    { id: 'schoolName',   errId: 'err-schoolName',   label: 'שם בית הספר' },
-    { id: 'schoolSymbol', errId: 'err-schoolSymbol', label: 'סמל מוסד' },
-    { id: 'principalName',errId: 'err-principalName',label: 'שם מנהל/ת' },
-    { id: 'orderDate',    errId: null,               label: 'תאריך' }
+    { id: 'schoolName',    errId: 'err-schoolName',    label: 'שם בית הספר' },
+    { id: 'schoolSymbol',  errId: 'err-schoolSymbol',  label: 'סמל מוסד' },
+    { id: 'principalName', errId: 'err-principalName', label: 'שם מנהל/ת' },
+    { id: 'orderDate',     errId: null,                label: 'תאריך' }
   ];
+  if (level >= 1) {
+    fields.push({ id: 'signerName', errId: 'err-signerName', label: 'שם החותם/ת' });
+    fields.push({ id: 'signerRole', errId: 'err-signerRole', label: 'תפקיד החותם/ת' });
+  }
 
   fields.forEach(f => {
     const el = document.getElementById(f.id);
@@ -1157,15 +1530,52 @@ function validate() {
     }
   });
 
+  // כתובת דוא"ל: חובה, כי אליה נשלח עותק ההזמנה החתומה
+  const emailEl = $('email');
+  const emailVal = emailEl.value.trim();
+  if (!EMAIL_RE.test(emailVal)) {
+    valid = false;
+    errors.push(emailVal ? 'כתובת דוא״ל תקינה' : 'כתובת דוא״ל (אליה יישלח עותק ההזמנה)');
+    emailEl.classList.add('error-field');
+    $('err-email').classList.add('visible');
+  } else {
+    emailEl.classList.remove('error-field');
+    $('err-email').classList.remove('visible');
+  }
+
   const selected = getSelectedCourses();
   if (selected.length === 0) {
     valid = false;
     errors.push('בחירת קורס אחד לפחות');
   }
 
+  if (level >= 1) {
+    if (!$('authConfirm').checked) {
+      valid = false;
+      errors.push('סימון תיבת האישור (הפרטים נכונים ואני מוסמך/ת לחתום)');
+      $('authBox').classList.add('error-field');
+      $('err-authConfirm').classList.add('visible');
+    } else {
+      $('authBox').classList.remove('error-field');
+      $('err-authConfirm').classList.remove('visible');
+    }
+  }
+
+  if (level >= 2) {
+    if (!signature) {
+      valid = false;
+      errors.push('חתימה על ההזמנה');
+      $('signBox').classList.add('error-field');
+      $('err-signature').classList.add('visible');
+    } else {
+      $('signBox').classList.remove('error-field');
+      $('err-signature').classList.remove('visible');
+    }
+  }
+
   const globalError = document.getElementById('globalError');
   if (!valid) {
-    globalError.innerHTML = `<strong>נא להשלים את השדות הבאים לפני ההמשך:</strong><br>• ${errors.join('<br>• ')}`;
+    globalError.innerHTML = `<strong>נא להשלים את הפרטים הבאים לפני ההמשך:</strong><br>• ${errors.join('<br>• ')}`;
     globalError.classList.add('visible');
     globalError.scrollIntoView({ behavior: 'smooth', block: 'center' });
   } else {
@@ -1193,10 +1603,93 @@ function buildDocHTML() {
   const date     = document.getElementById('orderDate').value;
   const displayDate = date ? formatDate(date) : '';
 
-  const approvalDateVal = document.getElementById('approvalDate').value;
-  const approvalDisplayDate = approvalDateVal ? formatDate(approvalDateVal) : displayDate;
-  const approvalPrincipal = document.getElementById('approvalPrincipal').value ||
-                            document.getElementById('principalName').value;
+  // ---- פרטי החתימה: אם הלקוח כבר חתם, מוצגת חתימה אמיתית; אחרת קו ריק לחתימה ידנית ----
+  const sig = signature;
+  const signerNameVal = (document.getElementById('signerName').value ||
+                         document.getElementById('principalName').value || '').trim();
+  const signerRoleVal = (document.getElementById('signerRole').value || '').trim();
+  const sigDateDisplay = sig
+    ? sig.signedAtDisplay + (sig.source === 'device' ? ' (שעון המכשיר)' : '')
+    : displayDate;
+
+  const lbl = (t) => `<div style="font-size:9.5pt;color:#5d6d7e;margin-bottom:3px;font-weight:600;">${t}</div>`;
+  const val = (t) => `<div style="font-size:11pt;font-weight:700;color:#1c2833;padding-bottom:4px;min-height:20px;">${esc(t)}</div>`;
+  // בשורת החתימה: הערך צמוד לקו התחתון באותו גובה של תיבת החתימה, כדי שהכותרות יהיו מיושרות
+  const valTall = (t) => `<div style="font-size:11pt;font-weight:700;color:#1c2833;padding-bottom:4px;min-height:44px;display:flex;align-items:flex-end;">${esc(t)}</div>`;
+  const underline = '<div style="border-bottom:1.5px solid #333;"></div>';
+  const sigCell = sig
+    ? `<div style="min-height:44px;display:flex;align-items:flex-end;border-bottom:1.5px solid #333;padding-bottom:2px;"><img src="${sig.dataUrl}" alt="חתימה" style="max-width:100%;max-height:56px;width:auto;height:auto;"></div>`
+    : `<div style="min-height:44px;border-bottom:1.5px solid #333;"></div>`;
+
+  const approvalHTML = `
+<div style="margin-top:4px;">
+  <div style="font-size:10.5pt;font-weight:700;color:#1a5276;border-bottom:2px solid #2e86c1;padding-bottom:4px;margin-bottom:8px;">✍️ אישור וחתימה</div>
+  <div style="font-size:9.5pt;margin-bottom:8px;color:#333;">אני מאשר/ת את פרטי ההזמנה כמפורט לעיל, ומצהיר/ה כי אני מוסמך/ת לחתום בשם בית הספר.</div>
+  <table style="width:100%;border-collapse:collapse;table-layout:fixed;">
+    <tr>
+      <td colspan="2" style="padding-left:12px;vertical-align:bottom;">${lbl('בית הספר')}${val(document.getElementById('schoolName').value)}${underline}</td>
+      <td style="padding-left:12px;vertical-align:bottom;">${lbl('סמל מוסד')}${val(document.getElementById('schoolSymbol').value)}${underline}</td>
+      <td style="vertical-align:bottom;">${sig ? lbl('מספר הזמנה') + val(sig.orderNo) + underline : ''}</td>
+    </tr>
+    <tr><td colspan="4" style="height:10px;"></td></tr>
+    <tr>
+      <td style="padding-left:12px;vertical-align:bottom;">${lbl('שם החותם/ת')}${valTall(signerNameVal)}${underline}</td>
+      <td style="padding-left:12px;vertical-align:bottom;">${lbl('תפקיד')}${valTall(signerRoleVal)}${underline}</td>
+      <td style="padding-left:12px;vertical-align:bottom;">${lbl('חתימה')}${sigCell}</td>
+      <td style="vertical-align:bottom;">${lbl(sig ? 'תאריך ושעת חתימה' : 'תאריך')}${valTall(sigDateDisplay)}${underline}</td>
+    </tr>
+  </table>
+  ${sig ? `<div style="font-size:8.5pt;color:#7f8c8d;margin-top:6px;">המסמך נחתם דיגיטלית על ידי ${esc(signerNameVal)}, ${esc(signerRoleVal)}, בתאריך ${esc(sigDateDisplay)}.</div>` : ''}
+</div>
+`;
+
+  const instructionsHTML = sig
+    ? `<div style="background:#eaf6fb;border:1.5px solid #a9cce3;border-radius:6px;padding:7px 14px;margin-bottom:8px;font-size:9.5pt;line-height:1.6;color:#1c2833;">
+  <span style="display:inline-block;">* לשאלות: <strong>050-5274030</strong></span>
+  &nbsp;&nbsp;&nbsp;
+  <span style="display:inline-block;"><strong>מייל:</strong> ${CONTACT_EMAIL}</span><br>
+  <span style="display:inline-block;">* לצורך דיווח במערכת גפ"ן — אנא פנו אלינו לקבלת הנחיות</span>
+</div>`
+    : `<div style="background:#eaf6fb;border:1.5px solid #a9cce3;border-radius:6px;padding:7px 14px;margin-bottom:8px;font-size:9.5pt;line-height:1.6;color:#1c2833;">
+  לאחר מילוי הטופס יש להדפיסו, לחתום ידנית ולשלוח אלינו.<br>
+  <span style="display:inline-block;margin-top:6px;"><strong>מייל:</strong> ${CONTACT_EMAIL}</span>
+  &nbsp;&nbsp;&nbsp;
+  <span style="display:inline-block;"><strong>פקס:</strong> ${CONTACT_FAX}</span><br>
+  <span style="display:inline-block;margin-top:4px;">* לשאלות: <strong>050-5274030</strong></span><br>
+  <span style="display:inline-block;">* לצורך דיווח במערכת גפ"ן — אנא פנו אלינו לקבלת הנחיות</span>
+</div>`;
+
+  // ---- טבלת הקורסים: מ-9 קורסים ומעלה מוצגת בשתי עמודות, כדי שהמסמך יישאר בעמוד אחד ----
+  const TWO_COLUMNS_FROM = 9;
+  const PRINT_EXACT = '-webkit-print-color-adjust:exact;print-color-adjust:exact;';
+  const thNum = `<th style="color:#000000;background:#dce8f3;padding:5px 8px;text-align:center;font-size:10pt;width:32px;font-weight:700;${PRINT_EXACT}">#</th>`;
+  const thName = `<th style="color:#000000;background:#dce8f3;padding:5px 12px;text-align:right;font-size:10pt;font-weight:700;${PRINT_EXACT}">שם הקורס</th>`;
+  const tdNum = (n, sep) => `<td style="text-align:center;color:#000000;background:#eef4fa;font-weight:800;padding:5px 8px;border-bottom:1px solid #dde;font-size:10pt;width:32px;${sep ? 'border-right:2px solid #c9d8e6;' : ''}${PRINT_EXACT}">${n}</td>`;
+  const tdName = (name, bg) => `<td style="padding:5px 12px;border-bottom:1px solid #dde;font-size:10pt;color:#000000;font-weight:700;background:${bg};">${esc(name)}</td>`;
+  const rowBg = (r) => (r % 2 === 1 ? '#eef4fa' : '#ffffff');
+
+  let courseTableRows = '';
+  let courseTableHead = '';
+  if (selected.length < TWO_COLUMNS_FROM) {
+    courseTableHead = thNum + thName;
+    selected.forEach((c, i) => {
+      courseTableRows += `<tr>${tdNum(i + 1)}${tdName(c.name, rowBg(i))}</tr>`;
+    });
+  } else {
+    const half = Math.ceil(selected.length / 2);
+    courseTableHead = thNum + thName + thNum.replace('width:32px;', 'width:32px;border-right:2px solid #c9d8e6;') + thName;
+    for (let r = 0; r < half; r++) {
+      const a = selected[r];
+      const b = selected[r + half];
+      courseTableRows += `<tr>${tdNum(r + 1)}${tdName(a.name, rowBg(r))}` +
+        (b ? `${tdNum(r + half + 1, true)}${tdName(b.name, rowBg(r))}` : `${tdNum('', true)}${tdName('', rowBg(r))}`) +
+        `</tr>`;
+    }
+  }
+  const coursesTableHTML = `<table style="width:100%;border-collapse:collapse;margin-bottom:8px;border:1px solid #dde;border-radius:6px;overflow:hidden;table-layout:fixed;">
+  <thead><tr>${courseTableHead}</tr></thead>
+  <tbody>${courseTableRows}</tbody>
+</table>`;
 
   const totalAmount = selected.reduce((sum, course) => sum + course.price, 0);
 
@@ -1256,15 +1749,7 @@ function buildDocHTML() {
 
 <!-- ===== קורסים ===== -->
 <div style="font-size:10.5pt;font-weight:700;color:#1a5276;border-bottom:2px solid #2e86c1;padding-bottom:4px;margin-bottom:6px;display:flex;align-items:center;gap:6px;">🎓 קורסים שנבחרו</div>
-<table style="width:100%;border-collapse:collapse;margin-bottom:8px;border:1px solid #dde;border-radius:6px;overflow:hidden;">
-  <thead>
-    <tr style="background:#1a5276;">
-      <th style="color:#000000;background:#dce8f3;padding:5px 8px;text-align:center;font-size:10pt;width:32px;font-weight:700;-webkit-print-color-adjust:exact;print-color-adjust:exact;">#</th>
-      <th style="color:#000000;background:#dce8f3;padding:5px 12px;text-align:right;font-size:10pt;font-weight:700;-webkit-print-color-adjust:exact;print-color-adjust:exact;">שם הקורס</th>
-    </tr>
-  </thead>
-  <tbody>${courseRows.join('')}</tbody>
-</table>
+${coursesTableHTML}
 
 <!-- ===== סיכום כמות ומחיר ===== -->
 <div style="background:#f0f6fb;border:1.5px solid #2e86c1;border-radius:6px;padding:6px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">
@@ -1279,42 +1764,10 @@ function buildDocHTML() {
 </div>
 
 <!-- ===== הנחיות ===== -->
-<div style="background:#eaf6fb;border:1.5px solid #a9cce3;border-radius:6px;padding:7px 14px;margin-bottom:8px;font-size:9.5pt;line-height:1.6;color:#1c2833;">
-  לאחר מילוי הטופס יש להדפיסו, לחתום ידנית, להוסיף חותמת בית ספר ולשלוח אלינו.<br>
-  <span style="display:inline-block;margin-top:6px;"><strong>מייל:</strong> ${CONTACT_EMAIL}</span>
-  &nbsp;&nbsp;&nbsp;
-  <span style="display:inline-block;"><strong>פקס:</strong> ${CONTACT_FAX}</span><br>
-  <span style="display:inline-block;margin-top:4px;">* לשאלות: <strong>050-5274030</strong></span><br>
-  <span style="display:inline-block;">* לצורך דיווח במערכת גפ"ן — אנא פנו אלינו לקבלת הנחיות</span>
-</div>
+${instructionsHTML}
 
-<!-- ===== אישור ===== -->
-<div style="margin-top:4px;">
-  <div style="font-size:10.5pt;font-weight:700;color:#1a5276;border-bottom:2px solid #2e86c1;padding-bottom:4px;margin-bottom:8px;">✍️ אישור ההזמנה</div>
-  <div style="font-size:9.5pt;margin-bottom:8px;color:#333;">אני מאשר/ת את פרטי ההזמנה כמפורט לעיל.</div>
-  <table style="width:100%;border-collapse:collapse;">
-    <tr>
-      <td style="width:25%;padding-left:12px;vertical-align:bottom;">
-        <div style="font-size:9.5pt;color:#5d6d7e;margin-bottom:3px;font-weight:600;">תאריך</div>
-        <div style="font-size:11pt;font-weight:700;color:#1c2833;padding-bottom:4px;">${approvalDisplayDate}</div>
-        <div style="border-bottom:1.5px solid #333;"></div>
-      </td>
-      <td style="width:25%;padding-left:12px;vertical-align:bottom;">
-        <div style="font-size:9.5pt;color:#5d6d7e;margin-bottom:3px;font-weight:600;">שם מנהל/ת</div>
-        <div style="font-size:11pt;font-weight:700;color:#1c2833;padding-bottom:4px;">${esc(approvalPrincipal)}</div>
-        <div style="border-bottom:1.5px solid #333;"></div>
-      </td>
-      <td style="width:25%;padding-left:12px;vertical-align:bottom;">
-        <div style="font-size:9.5pt;color:#5d6d7e;margin-bottom:3px;font-weight:600;">חתימה</div>
-        <div style="min-height:28px;border-bottom:1.5px solid #333;"></div>
-      </td>
-      <td style="width:25%;vertical-align:bottom;">
-        <div style="font-size:9.5pt;color:#5d6d7e;margin-bottom:3px;font-weight:600;">חותמת בית הספר</div>
-        <div style="min-height:28px;border-bottom:1.5px solid #333;"></div>
-      </td>
-    </tr>
-  </table>
-</div>
+<!-- ===== אישור וחתימה ===== -->
+${approvalHTML}
 
 <!-- ===== פוטר חברה ===== -->
 <div style="margin-top:8px;padding-top:6px;border-top:1px solid #d5dbdb;display:flex;align-items:center;gap:14px;direction:rtl;">
@@ -1372,16 +1825,45 @@ function injectPrintStyles() {
 }
 
 /* ============================================================
-   הפקת PDF
+   הפקת PDF — מנגנון אחד שמשרת הורדה, שיתוף ושליחה
    ============================================================ */
-async function handlePDF() {
-  if (!validate()) return;
+let pdfCache = null;    // { version, blob, filename } — מסמך שכבר הוכן ועדיין תואם לטופס
+let pdfPending = null;  // { version, promise } — הכנה שמתבצעת כרגע
 
+function safeFileName(s) {
+  return String(s).replace(/[\\/:*?"<>|\r\n]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80);
+}
+
+function pdfFileName() {
+  const school = safeFileName($('schoolName').value) || 'הזמנה';
+  return signature
+    ? `הזמנת קורסים - ${school} - ${signature.orderNo}.pdf`
+    : `הזמנת קורסים - ${school}.pdf`;
+}
+
+function getPdf() {
+  if (pdfCache && pdfCache.version === formVersion) return Promise.resolve(pdfCache);
+  if (pdfPending && pdfPending.version === formVersion) return pdfPending.promise;
+
+  const version = formVersion;
+  const promise = buildPdfBlob()
+    .then((blob) => {
+      const entry = { version, blob, filename: pdfFileName() };
+      if (version === formVersion) pdfCache = entry;
+      return entry;
+    })
+    .finally(() => { if (pdfPending && pdfPending.version === version) pdfPending = null; });
+  pdfPending = { version, promise };
+  return promise;
+}
+
+async function buildPdfBlob() {
   const iframe = document.createElement('iframe');
   iframe.style.cssText = 'position:fixed;top:-9999px;right:-9999px;width:794px;border:none;height:1123px;';
   document.body.appendChild(iframe);
 
-  const docHTML = `<!DOCTYPE html>
+  try {
+    const docHTML = `<!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
 <meta charset="UTF-8">
@@ -1400,19 +1882,17 @@ async function handlePDF() {
 <body>${buildDocHTML()}</body>
 </html>`;
 
-  iframe.contentDocument.open();
-  iframe.contentDocument.write(docHTML);
-  iframe.contentDocument.close();
+    iframe.contentDocument.open();
+    iframe.contentDocument.write(docHTML);
+    iframe.contentDocument.close();
 
-  await new Promise(r => setTimeout(r, 400));
+    const idoc = iframe.contentDocument;
+    await Promise.all(Array.from(idoc.images).map((img) =>
+      img.complete ? null : new Promise((r) => { img.onload = img.onerror = r; })));
+    await new Promise((r) => setTimeout(r, 300));
 
-  try {
-    const body = iframe.contentDocument.body;
+    const body = idoc.body;
     const contentH = body.scrollHeight;
-
-    // A4: 794px wide, 1123px tall at 96dpi
-    const A4_H = 1123;
-    const scale = contentH > A4_H ? A4_H / contentH : 1;
 
     const canvas = await html2canvas(body, {
       scale: 2,
@@ -1425,21 +1905,292 @@ async function handlePDF() {
     });
 
     const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const A4_W = 210, A4_H = 297;
+    const fullH = A4_W * (canvas.height / canvas.width);   // גובה התוכן ביחס לרוחב העמוד
+    let blob = null;
 
-    const imgData = canvas.toDataURL('image/jpeg', 0.95);
-    // fit entire canvas into one A4 page
-    const pdfW = 210;
-    const pdfH = Math.min(297, (canvas.height / canvas.width) * pdfW);
-    pdf.addImage(imgData, 'JPEG', 0, 0, pdfW, pdfH);
+    // אם הקובץ גדול מדי לשליחה במייל, מנסים שוב באיכות תמונה נמוכה יותר
+    for (const quality of [0.92, 0.8, 0.65]) {
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4', compress: true });
 
-    const schoolName = document.getElementById('schoolName').value.trim() || 'הזמנה';
-    pdf.save(`הזמנת קורסים - ${schoolName}.pdf`);
+      if (fullH <= A4_H) {
+        // נכנס בעמוד אחד
+        pdf.addImage(canvas.toDataURL('image/jpeg', quality), 'JPEG', 0, 0, A4_W, fullH);
+      } else {
+        // גבוה מעמוד: מכווצים בפרופורציה (בלי עיוות) כדי שהכל ייכנס בעמוד אחד, כמו בטופס הקודם
+        const h = A4_H;
+        const w = h * (canvas.width / canvas.height);
+        pdf.addImage(canvas.toDataURL('image/jpeg', quality), 'JPEG', (A4_W - w) / 2, 0, w, h);
+      }
+
+      blob = pdf.output('blob');
+      if (blob.size <= 2.9 * 1024 * 1024) break;
+    }
+    return blob;
+  } finally {
+    iframe.remove();
+  }
+}
+
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+
+function blobToBase64(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result).split(',')[1] || '');
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(blob);
+  });
+}
+
+function setBusy(btn, busyText) {
+  if (!btn) return;
+  if (busyText) {
+    btn.dataset.label = btn.innerHTML;
+    btn.innerHTML = busyText;
+    btn.disabled = true;
+  } else {
+    if (btn.dataset.label) btn.innerHTML = btn.dataset.label;
+    btn.disabled = false;
+  }
+}
+
+/* ============================================================
+   הורדה
+   ============================================================ */
+async function handlePDF() {
+  if (!validate()) return;
+  const btn = $('btnPdf');
+  setBusy(btn, '⏳ מכין מסמך...');
+  try {
+    const entry = await getPdf();
+    downloadBlob(entry.blob, entry.filename);
   } catch (err) {
     alert('אירעה שגיאה בהפקת ה-PDF. אנא נסו להדפיס ישירות.');
     console.error(err);
   } finally {
-    document.body.removeChild(iframe);
+    setBusy(btn, null);
+  }
+}
+
+/* ============================================================
+   שיתוף (בטלפון: פותח את תפריט השיתוף של המכשיר, כולל וואטסאפ)
+   ============================================================ */
+let shareSupported = false;
+
+function initShareButton() {
+  try {
+    const probe = new File(['x'], 'a.pdf', { type: 'application/pdf' });
+    shareSupported = !!(navigator.share && navigator.canShare && navigator.canShare({ files: [probe] }));
+  } catch (e) {
+    shareSupported = false;
+  }
+  applyShareVisibility();
+}
+
+function applyShareVisibility() {
+  document.querySelectorAll('.js-share').forEach((b) => {
+    b.style.display = shareSupported ? 'inline-flex' : 'none';
+  });
+}
+
+async function handleShare() {
+  if (!validate()) return;
+
+  const buttons = Array.from(document.querySelectorAll('.js-share'));
+  const started = Date.now();
+  const wasReady = !!(pdfCache && pdfCache.version === formVersion);
+  buttons.forEach((b) => setBusy(b, '⏳ מכין מסמך...'));
+
+  let entry;
+  try {
+    entry = await getPdf();
+  } catch (err) {
+    console.error(err);
+    alert('אירעה שגיאה בהכנת המסמך. נסו להוריד אותו במקום.');
+    return;
+  } finally {
+    buttons.forEach((b) => setBusy(b, null));
+  }
+
+  // דפדפנים בטלפון מתירים שיתוף רק סמוך ללחיצה. אם ההכנה התארכה, מבקשים ללחוץ שוב (המסמך כבר מוכן)
+  if (!wasReady && Date.now() - started > 2500) {
+    showStatus('info', 'המסמך מוכן. לחצו שוב על ״שיתוף״ כדי לשלוח אותו.');
+    return;
+  }
+
+  try {
+    const file = new File([entry.blob], entry.filename, { type: 'application/pdf' });
+    await navigator.share({ files: [file], title: 'הזמנת קורסים - חטיפי למידה' });
+  } catch (err) {
+    if (err && err.name === 'AbortError') return;   // הלקוח סגר את תפריט השיתוף
+    downloadBlob(entry.blob, entry.filename);
+    showStatus('info', 'לא ניתן היה לפתוח את תפריט השיתוף, ולכן המסמך הורד למכשיר. אפשר לשלוח אותו משם.');
+  }
+}
+
+/* ============================================================
+   הודעות מצב (שליחה / הצלחה / כשלון)
+   ============================================================ */
+function showStatus(type, html) {
+  const box = $('sendStatus');
+  box.className = `status-box visible ${type}`;
+  box.innerHTML = html;
+  applyShareVisibility();
+}
+
+function hideStatus() {
+  const box = $('sendStatus');
+  box.className = 'status-box';
+  box.innerHTML = '';
+}
+
+function refreshSendButton() {
+  const b = $('btnSend');
+  if (!b) return;
+  if (sending) {
+    b.disabled = true;
+    b.innerHTML = '⏳ שולח...';
+  } else if (sentOrder && sentOrder.version === formVersion) {
+    b.disabled = true;
+    b.innerHTML = '✅ ההזמנה נשלחה';
+  } else {
+    b.disabled = false;
+    b.innerHTML = '📨 שלח הזמנה';
+  }
+}
+
+const FIELD_LABELS = {
+  schoolName: 'שם בית הספר', schoolSymbol: 'סמל מוסד', principalName: 'שם מנהל/ת',
+  email: 'כתובת דוא״ל', signerName: 'שם החותם/ת', signerRole: 'תפקיד החותם/ת',
+  courses: 'הקורסים שנבחרו', consent: 'תיבת האישור', pdf: 'המסמך', orderDate: 'תאריך'
+};
+
+function showSentStatus(o) {
+  const copyLine = o.customerCopy
+    ? `עותק של ההזמנה החתומה נשלח אל <strong dir="ltr">${esc(o.email)}</strong>.`
+    : `לא הצלחנו לשלוח עותק אל <strong dir="ltr">${esc(o.email)}</strong> (ייתכן שהכתובת שגויה). מומלץ להוריד את המסמך ולשמור אותו אצלכם.`;
+  showStatus('success', `
+    <div class="status-title">✅ ההזמנה נשלחה</div>
+    <div>מספר הזמנה: <strong>${esc(o.orderNo)}</strong></div>
+    <div>${copyLine}</div>
+    <div class="status-actions">
+      <button type="button" class="btn btn-pdf" onclick="handlePDF()">📄 הורדת המסמך</button>
+      <button type="button" class="btn btn-share js-share" style="display:none;" onclick="handleShare()">📤 שיתוף</button>
+    </div>`);
+}
+
+function showSendFailure(status, data) {
+  let reason;
+  if (status === 0 || data.error === 'network') {
+    reason = 'לא הצלחנו להתחבר לשרת. בדקו את החיבור לאינטרנט ונסו שוב.';
+  } else if (data.error === 'changed') {
+    reason = 'הטופס שונה בזמן הכנת המסמך. לחצו שוב על ״שלח הזמנה״.';
+  } else if (status === 429) {
+    reason = 'בוצעו יותר מדי ניסיונות שליחה. נסו שוב בעוד כמה דקות.';
+  } else if (status === 400 && data.field) {
+    reason = `אחד הפרטים אינו תקין (${esc(FIELD_LABELS[data.field] || data.field)}). בדקו את הטופס ונסו שוב.`;
+  } else {
+    reason = 'השליחה האוטומטית לא הצליחה כרגע.';
+  }
+  showStatus('failure', `
+    <div class="status-title">⚠️ ההזמנה לא נשלחה</div>
+    <div>${reason}</div>
+    <div>אפשר להוריד את המסמך החתום ולשלוח אותו אלינו במייל אל <strong dir="ltr">${esc(CONTACT_EMAIL)}</strong>.</div>
+    <div class="status-actions">
+      <button type="button" class="btn btn-send" style="font-size:0.95rem;padding:11px 24px;" onclick="handleSend()">🔁 נסו שוב</button>
+      <button type="button" class="btn btn-pdf" onclick="handlePDF()">📄 הורדת המסמך</button>
+    </div>`);
+}
+
+/* ============================================================
+   שליחת ההזמנה
+   ============================================================ */
+function buildPayload(pdfBase64) {
+  const courses = getSelectedCourses().map((c) => ({ name: c.name, price: c.price }));
+  return {
+    orderNo: signature.orderNo,
+    signedAt: signature.signedAt,
+    timeSource: signature.source,
+    order: {
+      orderDate: $('orderDate').value,
+      schoolName: $('schoolName').value.trim(),
+      schoolSymbol: $('schoolSymbol').value.trim(),
+      principalName: $('principalName').value.trim(),
+      ordererRole: $('ordererRole').value.trim(),
+      phone: $('phone').value.trim(),
+      email: $('email').value.trim(),
+      city: $('city').value.trim(),
+      courses
+    },
+    signer: { name: $('signerName').value.trim(), role: $('signerRole').value.trim() },
+    consent: $('authConfirm').checked === true,
+    pdfBase64,
+    website: $('hpWebsite').value
+  };
+}
+
+async function handleSend() {
+  if (sending) return;
+  if (sentOrder && sentOrder.version === formVersion) {
+    showSentStatus(sentOrder);
+    return;
+  }
+  if (!validate(2)) return;
+
+  sending = true;
+  refreshSendButton();
+  showStatus('sending', '<span class="spinner" aria-hidden="true"></span><span>מכינים את ההזמנה החתומה ושולחים אותה...</span>');
+
+  try {
+    const entry = await getPdf();
+    if (entry.version !== formVersion || !signature) {
+      throw { kind: 'changed' };
+    }
+    const payload = buildPayload(await blobToBase64(entry.blob));
+
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 45000);
+    let res;
+    let data = {};
+    try {
+      res = await fetch('/api/send-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        signal: controller.signal
+      });
+      data = await res.json().catch(() => ({}));
+    } finally {
+      clearTimeout(timer);
+    }
+
+    if (res.ok && data.ok) {
+      sentOrder = {
+        orderNo: payload.orderNo,
+        version: formVersion,
+        customerCopy: data.customerCopy !== false,
+        email: payload.order.email
+      };
+      showSentStatus(sentOrder);
+    } else {
+      showSendFailure(res.status, data);
+    }
+  } catch (err) {
+    showSendFailure(0, { error: err && err.kind === 'changed' ? 'changed' : 'network' });
+    if (!(err && err.kind === 'changed')) console.error(err);
+  } finally {
+    sending = false;
+    refreshSendButton();
   }
 }
 
@@ -1479,16 +2230,33 @@ function handleWord() {
 function handleClear() {
   if (!confirm('האם אתה בטוח שברצונך לנקות את כל הפרטים?')) return;
 
-  ['schoolName','schoolSymbol','principalName','ordererRole','phone','email','city'].forEach(id => {
+  ['schoolName','schoolSymbol','principalName','ordererRole','phone','email','city','hpWebsite'].forEach(id => {
     document.getElementById(id).value = '';
     document.getElementById(id).classList.remove('error-field');
   });
 
-  const today = new Date().toISOString().split('T')[0];
-  document.getElementById('orderDate').value = today;
-  document.getElementById('approvalDate').value = today;
-  document.getElementById('approvalPrincipal').value = '';
-  document.getElementById('approvalPrincipal')._manuallyEdited = false;
+  document.getElementById('orderDate').value = todayLocal();
+
+  // אזור החתימה
+  $('signSchoolName').value = '';
+  $('signSchoolSymbol').value = '';
+  $('signerName').value = '';
+  $('signerName')._manual = false;
+  $('signerRole').value = DEFAULT_SIGNER_ROLE;
+  $('signerRole')._manual = false;
+  $('signerName').classList.remove('error-field');
+  $('signerRole').classList.remove('error-field');
+  $('authConfirm').checked = false;
+  $('authBox').classList.remove('error-field');
+  $('signNotice').style.display = 'none';
+
+  signature = null;
+  sentOrder = null;
+  pdfCache = null;
+  formVersion++;
+  renderSignature();
+  hideStatus();
+  refreshSendButton();
 
   document.querySelectorAll('.course-card.selected').forEach(c => {
     c.classList.remove('selected');
@@ -1499,6 +2267,292 @@ function handleClear() {
   document.getElementById('globalError').classList.remove('visible');
 
   updateSummary();
+}
+
+/* ============================================================
+   חתימה על המסך
+   ============================================================ */
+const INK = '#10233b';
+const LINE_W = 2.6;
+const pad = { canvas: null, ctx: null, strokes: [], current: null, drawing: false };
+
+function styleCtx(ctx) {
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.lineWidth = LINE_W;
+  ctx.strokeStyle = INK;
+  ctx.fillStyle = INK;
+}
+
+function initSignaturePad() {
+  const c = $('sigCanvas');
+  pad.canvas = c;
+  c.addEventListener('pointerdown', onPadDown);
+  c.addEventListener('pointermove', onPadMove);
+  c.addEventListener('pointerup', onPadUp);
+  c.addEventListener('pointercancel', onPadUp);
+  c.addEventListener('lostpointercapture', onPadUp);
+  c.addEventListener('contextmenu', (e) => e.preventDefault());
+  window.addEventListener('resize', () => {
+    if ($('signModal').classList.contains('open') && sizePad()) redrawPad();
+  });
+}
+
+// מתאים את הקנבס לגודל התצוגה ולחדות המסך. מחזיר true אם הגודל השתנה.
+function sizePad() {
+  const c = pad.canvas;
+  const rect = c.getBoundingClientRect();
+  const dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
+  const w = Math.round(rect.width * dpr);
+  const h = Math.round(rect.height * dpr);
+  if (pad.ctx && c.width === w && c.height === h) return false;
+  c.width = w;
+  c.height = h;
+  pad.ctx = c.getContext('2d');
+  pad.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  styleCtx(pad.ctx);
+  return true;
+}
+
+function padPoint(e) {
+  const r = pad.canvas.getBoundingClientRect();
+  return { x: e.clientX - r.left, y: e.clientY - r.top };
+}
+
+function dot(ctx, p) {
+  ctx.beginPath();
+  ctx.arc(p.x, p.y, LINE_W / 2, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+// ציור הקטע האחרון בקו חלק (תוך כדי חתימה)
+function drawLast(ctx, pts) {
+  const n = pts.length;
+  if (n < 2) return;
+  ctx.beginPath();
+  if (n === 2) {
+    ctx.moveTo(pts[0].x, pts[0].y);
+    ctx.lineTo(pts[1].x, pts[1].y);
+  } else {
+    const a = pts[n - 3], b = pts[n - 2], c = pts[n - 1];
+    ctx.moveTo((a.x + b.x) / 2, (a.y + b.y) / 2);
+    ctx.quadraticCurveTo(b.x, b.y, (b.x + c.x) / 2, (b.y + c.y) / 2);
+  }
+  ctx.stroke();
+}
+
+// ציור קו שלם (לשחזור הקנבס ולייצוא התמונה)
+function drawStroke(ctx, pts) {
+  if (pts.length === 1) { dot(ctx, pts[0]); return; }
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x, pts[0].y);
+  for (let i = 1; i < pts.length - 1; i++) {
+    const mx = (pts[i].x + pts[i + 1].x) / 2;
+    const my = (pts[i].y + pts[i + 1].y) / 2;
+    ctx.quadraticCurveTo(pts[i].x, pts[i].y, mx, my);
+  }
+  const last = pts[pts.length - 1];
+  ctx.lineTo(last.x, last.y);
+  ctx.stroke();
+}
+
+function onPadDown(e) {
+  if (e.pointerType === 'mouse' && e.button !== 0) return;
+  e.preventDefault();
+  try { pad.canvas.setPointerCapture(e.pointerId); } catch (_) { /* לא קריטי */ }
+  pad.drawing = true;
+  pad.current = [padPoint(e)];
+  pad.strokes.push(pad.current);
+  $('sigPlaceholder').style.display = 'none';
+  $('err-sigPad').classList.remove('visible');
+  dot(pad.ctx, pad.current[0]);
+}
+
+function onPadMove(e) {
+  if (!pad.drawing) return;
+  e.preventDefault();
+  const events = typeof e.getCoalescedEvents === 'function' ? e.getCoalescedEvents() : [];
+  (events.length ? events : [e]).forEach((ev) => {
+    const p = padPoint(ev);
+    const last = pad.current[pad.current.length - 1];
+    if (Math.hypot(p.x - last.x, p.y - last.y) < 0.8) return;
+    pad.current.push(p);
+    drawLast(pad.ctx, pad.current);
+  });
+}
+
+function onPadUp() {
+  if (!pad.drawing) return;
+  pad.drawing = false;
+  pad.current = null;
+}
+
+function redrawPad() {
+  const c = pad.canvas;
+  pad.ctx.save();
+  pad.ctx.setTransform(1, 0, 0, 1, 0, 0);
+  pad.ctx.clearRect(0, 0, c.width, c.height);
+  pad.ctx.restore();
+  pad.strokes.forEach((s) => drawStroke(pad.ctx, s));
+}
+
+function clearSigPad() {
+  pad.strokes = [];
+  pad.current = null;
+  pad.drawing = false;
+  if (pad.ctx) redrawPad();
+  $('sigPlaceholder').style.display = 'flex';
+  $('err-sigPad').classList.remove('visible');
+}
+
+function padStats() {
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity, length = 0, points = 0;
+  pad.strokes.forEach((s) => {
+    s.forEach((p, i) => {
+      points++;
+      minX = Math.min(minX, p.x); minY = Math.min(minY, p.y);
+      maxX = Math.max(maxX, p.x); maxY = Math.max(maxY, p.y);
+      if (i > 0) length += Math.hypot(p.x - s[i - 1].x, p.y - s[i - 1].y);
+    });
+  });
+  return { minX, minY, maxX, maxY, length, points };
+}
+
+// האם נחתם משהו ממשי (ולא נקודה או שרבוט זעיר)
+function padHasInk() {
+  const st = padStats();
+  return st.points >= 8 && st.length >= 80 && (st.maxX - st.minX >= 30 || st.maxY - st.minY >= 30);
+}
+
+// ייצוא החתימה לתמונה שקופה וצמודה (חתוכה סביב החתימה עצמה)
+function exportSignature() {
+  const st = padStats();
+  const margin = LINE_W * 2 + 4;
+  const minX = st.minX - margin;
+  const minY = st.minY - margin;
+  const w = st.maxX - st.minX + margin * 2;
+  const h = st.maxY - st.minY + margin * 2;
+  const scale = Math.min(2, 700 / w);
+
+  const out = document.createElement('canvas');
+  out.width = Math.max(1, Math.round(w * scale));
+  out.height = Math.max(1, Math.round(h * scale));
+  const ctx = out.getContext('2d');
+  ctx.scale(scale, scale);
+  ctx.translate(-minX, -minY);
+  styleCtx(ctx);
+  pad.strokes.forEach((s) => drawStroke(ctx, s));
+  return out.toDataURL('image/png');
+}
+
+function openSignature() {
+  if (!validate(1)) return;
+  $('sigSignerLine').textContent = `חותם/ת: ${$('signerName').value.trim()}, ${$('signerRole').value.trim()}`;
+  $('signModal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  clearSigPad();
+  requestAnimationFrame(() => {
+    sizePad();
+    redrawPad();
+  });
+}
+
+function closeSignature() {
+  $('signModal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+/* ============================================================
+   חותמת זמן ומספר הזמנה: מהשרת, ואם אין חיבור - מהמכשיר (ומסומן כך)
+   ============================================================ */
+function formatIsraelLocal(d) {
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Asia/Jerusalem', year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', hour12: false
+  }).formatToParts(d);
+  const get = (t) => parts.find((p) => p.type === t).value;
+  const hour = get('hour') === '24' ? '00' : get('hour');
+  return `${get('day')}/${get('month')}/${get('year')} ${hour}:${get('minute')}`;
+}
+
+function localOrderNo(d) {
+  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Asia/Jerusalem', year: '2-digit', month: '2-digit', day: '2-digit'
+  }).formatToParts(d);
+  const get = (t) => parts.find((p) => p.type === t).value;
+  const rnd = crypto.getRandomValues(new Uint8Array(5));
+  const suffix = Array.from(rnd, (b) => alphabet[b % alphabet.length]).join('');
+  return `HL-${get('year')}${get('month')}${get('day')}-${suffix}`;
+}
+
+async function getStamp() {
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 6000);
+    const res = await fetch('/api/stamp', { cache: 'no-store', signal: controller.signal });
+    clearTimeout(timer);
+    const data = await res.json();
+    if (res.ok && data && data.ok && data.orderNo && data.signedAt && data.signedAtDisplay) {
+      return { orderNo: data.orderNo, signedAt: data.signedAt, signedAtDisplay: data.signedAtDisplay, source: 'server' };
+    }
+  } catch (e) { /* ממשיכים לגיבוי */ }
+  const now = new Date();
+  return { orderNo: localOrderNo(now), signedAt: now.toISOString(), signedAtDisplay: formatIsraelLocal(now), source: 'device' };
+}
+
+async function confirmSignature() {
+  if (!padHasInk()) {
+    $('err-sigPad').classList.add('visible');
+    return;
+  }
+  const btn = $('btnConfirmSign');
+  setBusy(btn, '⏳ רושם חתימה...');
+  try {
+    const stamp = await getStamp();
+    signature = {
+      dataUrl: exportSignature(),
+      name: $('signerName').value.trim(),
+      role: $('signerRole').value.trim(),
+      orderNo: stamp.orderNo,
+      signedAt: stamp.signedAt,
+      signedAtDisplay: stamp.signedAtDisplay,
+      source: stamp.source
+    };
+    formVersion++;
+    $('signNotice').style.display = 'none';
+    renderSignature();
+    closeSignature();
+    // מכינים את ה-PDF כבר עכשיו כדי ששליחה ושיתוף יהיו מיידיים
+    setTimeout(() => { getPdf().catch(() => {}); }, 300);
+  } finally {
+    setBusy(btn, null);
+  }
+}
+
+function clearSignature() {
+  signature = null;
+  formVersion++;
+  renderSignature();
+}
+
+function renderSignature() {
+  const done = !!signature;
+  $('signEmpty').style.display = done ? 'none' : 'block';
+  $('signDone').style.display = done ? 'block' : 'none';
+  $('signBox').classList.toggle('signed', done);
+  if (done) {
+    $('signBox').classList.remove('error-field');
+    $('err-signature').classList.remove('visible');
+    $('signPreviewImg').src = signature.dataUrl;
+    $('signMeta').innerHTML =
+      `נחתם על ידי <strong>${esc(signature.name)}</strong>, ${esc(signature.role)}<br>` +
+      `בתאריך ${esc(signature.signedAtDisplay)}${signature.source === 'device' ? ' (לפי שעון המכשיר)' : ''}<br>` +
+      `מספר הזמנה: <strong>${esc(signature.orderNo)}</strong>`;
+  } else {
+    $('signPreviewImg').removeAttribute('src');
+    $('signMeta').innerHTML = '';
+  }
 }
 </script>
 </body>

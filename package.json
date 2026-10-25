@@ -1,0 +1,9 @@
+{
+  "name": "tofes-hazmana",
+  "version": "2.0.0",
+  "private": true,
+  "description": "טופס הזמנת קורסים - חטיפי למידה (עמוד סטטי + פונקציות שליחת מייל)",
+  "dependencies": {
+    "nodemailer": "10.0.16"
+  }
+}
