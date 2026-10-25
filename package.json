@@ -1,9 +1,13 @@
 {
   "name": "tofes-hazmana",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "private": true,
   "description": "טופס הזמנת קורסים - חטיפי למידה (עמוד סטטי + פונקציות שליחת מייל)",
   "dependencies": {
+    "@supabase/supabase-js": "2.117.3",
     "nodemailer": "10.0.16"
+  },
+  "engines": {
+    "node": "22.x"
   }
 }
