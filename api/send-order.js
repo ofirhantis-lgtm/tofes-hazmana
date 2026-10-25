@@ -14,10 +14,15 @@
     GMAIL_USER           כתובת הג'ימייל ממנה נשלחים המיילים
     GMAIL_APP_PASSWORD   סיסמת האפליקציה (16 תווים, אפשר עם או בלי רווחים)
     OWNER_EMAIL          אופציונלי: לאן מגיעות ההזמנות. אם לא הוגדר - אל GMAIL_USER
+    SUPABASE_URL, SUPABASE_SECRET_KEY
+                         אופציונלי: רישום ההזמנה גם במערכת הניהול (ממתינה לאישור).
+                         אם לא הוגדרו — ההזמנה נשלחת במייל בלבד.
 */
 
 const nodemailer = require('nodemailer');
-const { formatIsrael, ORDER_NO_RE, escapeHtml } = require('../lib/shared');
+const { formatIsrael, ORDER_NO_RE, REF_RE, escapeHtml } = require('../lib/shared');
+const { clientIp, sameOrigin, makeRateLimiter } = require('../lib/guard');
+const { submitIncoming } = require('../lib/db');
 
 // פרטי קשר שמופיעים בעותק שנשלח ללקוח
 const CONTACT_PHONE = '050-5274030';
@@ -30,12 +35,7 @@ const MIN_PDF_BYTES = 1024;
 const MAX_CLOCK_GAP_MS = 2 * 60 * 60 * 1000; // פער זמן מקסימלי בין החתימה לשליחה לפני שמסמנים
 
 // הגבלת קצב בסיסית (בזיכרון של המופע, כהגנה בסיסית מפני ניצול לרעה)
-const RATE_WINDOW_MS = 15 * 60 * 1000;
-const RATE_MAX_PER_IP = 6;
-const GLOBAL_WINDOW_MS = 60 * 60 * 1000;
-const GLOBAL_MAX = 60;
-const ipHits = new Map();
-let globalHits = [];
+const rateLimited = makeRateLimiter({ windowMs: 15 * 60 * 1000, perIp: 6, globalMax: 60 });
 
 const EMAIL_RE = /^[A-Za-z0-9._%+\-]+@[A-Za-z0-9\-]+(\.[A-Za-z0-9\-]+)*\.[A-Za-z]{2,}$/;
 
@@ -52,45 +52,6 @@ function text(value, { min = 0, max = 200 } = {}) {
   const v = clean(value);
   if (v.length < min || v.length > max) return null;
   return v;
-}
-
-function clientIp(req) {
-  const raw = req.headers['x-vercel-forwarded-for'] || req.headers['x-forwarded-for'] ||
-    (req.socket && req.socket.remoteAddress) || '';
-  return String(raw).split(',')[0].trim() || 'unknown';
-}
-
-function sameOrigin(req) {
-  const origin = req.headers.origin;
-  const host = req.headers['x-forwarded-host'] || req.headers.host;
-  if (!origin || !host) return false;
-  try {
-    return new URL(origin).host === String(host).split(',')[0].trim();
-  } catch (e) {
-    return false;
-  }
-}
-
-function rateLimited(ip) {
-  const now = Date.now();
-  globalHits = globalHits.filter((t) => now - t < GLOBAL_WINDOW_MS);
-  if (globalHits.length >= GLOBAL_MAX) return true;
-
-  const recent = (ipHits.get(ip) || []).filter((t) => now - t < RATE_WINDOW_MS);
-  if (recent.length >= RATE_MAX_PER_IP) {
-    ipHits.set(ip, recent);
-    return true;
-  }
-  recent.push(now);
-  ipHits.set(ip, recent);
-  globalHits.push(now);
-
-  if (ipHits.size > 500) {
-    for (const [key, arr] of ipHits) {
-      if (!arr.some((t) => now - t < RATE_WINDOW_MS)) ipHits.delete(key);
-    }
-  }
-  return false;
 }
 
 function displayDate(isoDate) {
@@ -116,8 +77,9 @@ function parseBody(req) {
 function validate(body) {
   const fail = (field) => ({ ok: false, field });
 
-  const orderNo = typeof body.orderNo === 'string' ? body.orderNo : '';
-  if (!ORDER_NO_RE.test(orderNo)) return fail('orderNo');
+  // מספר אסמכתא: רץ מהמסד (T-1001) או זמני (HL-...) כשהמסד לא זמין
+  const ref = typeof body.ref === 'string' ? body.ref : (typeof body.orderNo === 'string' ? body.orderNo : '');
+  if (!REF_RE.test(ref) && !ORDER_NO_RE.test(ref)) return fail('ref');
 
   const signedAt = new Date(body.signedAt);
   if (!body.signedAt || Number.isNaN(signedAt.getTime())) return fail('signedAt');
@@ -172,7 +134,7 @@ function validate(body) {
   return {
     ok: true,
     data: {
-      orderNo, signedAt, timeSource,
+      ref, signedAt, timeSource,
       orderDate, schoolName, schoolSymbol, principalName, ordererRole, phone, email, city,
       courses, total: courses.reduce((sum, c) => sum + c.price, 0),
       signerName, signerRole, pdf
@@ -216,13 +178,17 @@ function ownerMail(d, meta) {
   const notes = [];
   if (d.timeSource === 'device') notes.push('חותמת הזמן נלקחה משעון המכשיר של הלקוח ולא מהשרת.');
   if (meta.clockGap) notes.push('יש פער של יותר משעתיים בין שעת החתימה לשעת השליחה.');
+  const regHtml = meta.registered
+    ? `<div style="background:#eafaf1;border:1px solid #27ae60;border-radius:6px;padding:8px 12px;margin:12px 0;font-size:14px;">✅ ההזמנה ממתינה לאישורך במערכת הניהול, במסך "הזמנות מהטופס".</div>`
+    : `<div style="background:#fdf0ef;border:1px solid #c0392b;border-radius:6px;padding:8px 12px;margin:12px 0;font-size:14px;">⚠️ ההזמנה לא נרשמה אוטומטית במערכת הניהול. יש להזין אותה ידנית.</div>`;
   const noteHtml = notes.length
     ? `<div style="background:#fef9e7;border:1px solid #f0c040;border-radius:6px;padding:8px 12px;margin:12px 0;font-size:13px;">⚠️ ${notes.map(escapeHtml).join('<br>⚠️ ')}</div>`
     : '';
 
   const html = `<div dir="rtl" style="font-family:${FONT};font-size:15px;color:#1c2833;line-height:1.6;max-width:640px;">
   <h2 style="color:#1a5276;margin:0 0 6px;">התקבלה הזמנה חדשה</h2>
-  <div style="margin-bottom:10px;">מספר הזמנה: <strong>${escapeHtml(d.orderNo)}</strong> &nbsp;|&nbsp; ההזמנה החתומה מצורפת למייל כקובץ PDF.</div>
+  <div style="margin-bottom:10px;">מספר אסמכתא: <strong>${escapeHtml(d.ref)}</strong> &nbsp;|&nbsp; ההזמנה החתומה מצורפת למייל כקובץ PDF.</div>
+  ${regHtml}
   ${noteHtml}
   <table dir="rtl" style="width:100%;border-collapse:collapse;font-size:14px;margin-bottom:10px;">
     ${row('בית ספר', d.schoolName)}
@@ -244,7 +210,8 @@ function ownerMail(d, meta) {
 </div>`;
 
   const lines = [
-    `התקבלה הזמנה חדשה - ${d.orderNo}`,
+    `התקבלה הזמנה חדשה - ${d.ref}`,
+    meta.registered ? 'ההזמנה ממתינה לאישורך במערכת הניהול, במסך "הזמנות מהטופס".' : 'שימו לב: ההזמנה לא נרשמה אוטומטית במערכת הניהול. יש להזין אותה ידנית.',
     '',
     `בית ספר: ${d.schoolName} (סמל מוסד ${d.schoolSymbol})`,
     `חותם/ת: ${d.signerName}, ${d.signerRole}`,
@@ -271,7 +238,7 @@ function customerMail(d, meta) {
   <h2 style="color:#1a5276;margin:0 0 8px;">תודה, ההזמנה התקבלה</h2>
   <p style="margin:0 0 10px;">שלום ${escapeHtml(d.signerName)},</p>
   <p style="margin:0 0 10px;">ההזמנה של <strong>${escapeHtml(d.schoolName)}</strong> התקבלה אצלנו.
-  מצורף עותק של ההזמנה החתומה לשמירה אצלכם (מספר הזמנה: <strong>${escapeHtml(d.orderNo)}</strong>, נחתם בתאריך ${escapeHtml(meta.signedAtDisplay)}).</p>
+  מצורף עותק של ההזמנה החתומה לשמירה אצלכם (מספר אסמכתא: <strong>${escapeHtml(d.ref)}</strong>, נחתם בתאריך ${escapeHtml(meta.signedAtDisplay)}).</p>
   ${coursesTable(d)}
   <p style="margin:16px 0 0;">לשאלות אפשר להשיב למייל זה או להתקשר: <strong>${escapeHtml(CONTACT_PHONE)}</strong></p>
   <p style="margin:16px 0 0;color:#5d6d7e;font-size:13px;">${escapeHtml(COMPANY_NAME)} | ${escapeHtml(COMPANY_LEGAL)}</p>
@@ -281,7 +248,7 @@ function customerMail(d, meta) {
     `שלום ${d.signerName},`,
     '',
     `ההזמנה של ${d.schoolName} התקבלה אצלנו.`,
-    `מצורף עותק של ההזמנה החתומה לשמירה אצלכם (מספר הזמנה: ${d.orderNo}, נחתם בתאריך ${meta.signedAtDisplay}).`,
+    `מצורף עותק של ההזמנה החתומה לשמירה אצלכם (מספר אסמכתא: ${d.ref}, נחתם בתאריך ${meta.signedAtDisplay}).`,
     '',
     ...d.courses.map((c, i) => `${i + 1}. ${c.name} - ${shekel(c.price)}`),
     `סה"כ (כולל מע"מ): ${shekel(d.total)}`,
@@ -316,7 +283,7 @@ module.exports = async function handler(req, res) {
 
   // שדה מלכודת לרובוטים: בני אדם לא רואים אותו ולא ממלאים אותו
   if (typeof body.website === 'string' && body.website.trim() !== '') {
-    return res.status(200).json({ ok: true, orderNo: String(body.orderNo || ''), customerCopy: false });
+    return res.status(200).json({ ok: true, ref: String(body.ref || body.orderNo || ''), customerCopy: false });
   }
 
   const checked = validate(body);
@@ -342,6 +309,18 @@ module.exports = async function handler(req, res) {
     clockGap: Math.abs(now.getTime() - d.signedAt.getTime()) > MAX_CLOCK_GAP_MS
   };
 
+  // רישום במערכת הניהול (ממתינה לאישור). כישלון כאן לא עוצר את המייל — המייל הוא רשת הביטחון.
+  meta.registered = false;
+  if (REF_RE.test(d.ref)) {
+    try {
+      const r = await submitIncoming(d.ref, d, meta);
+      meta.registered = !!r.saved;
+      if (!r.saved) console.error('send-order: ההזמנה לא נרשמה במסד:', r.reason);
+    } catch (err) {
+      console.error('send-order: רישום במסד נכשל:', err && (err.code || err.statusCode || ''), err && err.message);
+    }
+  }
+
   const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
     port: 465,
@@ -353,7 +332,7 @@ module.exports = async function handler(req, res) {
   });
 
   const attachment = {
-    filename: `Order-${d.orderNo}.pdf`,
+    filename: `Order-${d.ref}.pdf`,
     content: d.pdf,
     contentType: 'application/pdf'
   };
@@ -366,7 +345,7 @@ module.exports = async function handler(req, res) {
       from,
       to: owner,
       replyTo: d.email,
-      subject: clean(`הזמנה חדשה ${d.orderNo} - ${d.schoolName}`),
+      subject: clean(`הזמנה חדשה ${d.ref} - ${d.schoolName}`),
       text: toOwner.text,
       html: toOwner.html,
       attachments: [attachment]
@@ -385,7 +364,7 @@ module.exports = async function handler(req, res) {
       from,
       to: d.email,
       replyTo: owner,
-      subject: clean(`עותק הזמנה ${d.orderNo} - ${COMPANY_NAME}`),
+      subject: clean(`עותק הזמנה ${d.ref} - ${COMPANY_NAME}`),
       text: toCustomer.text,
       html: toCustomer.html,
       attachments: [attachment]
@@ -399,7 +378,8 @@ module.exports = async function handler(req, res) {
 
   return res.status(200).json({
     ok: true,
-    orderNo: d.orderNo,
+    ref: d.ref,
+    registered: meta.registered,
     customerCopy,
     receivedAtDisplay: meta.receivedAtDisplay
   });

@@ -1356,7 +1356,7 @@ const EMAIL_RE = /^[A-Za-z0-9._%+\-]+@[A-Za-z0-9\-]+(\.[A-Za-z0-9\-]+)*\.[A-Za-z
 
 let signature = null;   // החתימה שאושרה (או null)
 let formVersion = 0;    // עולה בכל שינוי בטופס או בחתימה, כדי לזהות קובץ PDF שמור שכבר לא מעודכן
-let sentOrder = null;   // הזמנה שנשלחה בהצלחה: { orderNo, version, customerCopy, email }
+let sentOrder = null;   // הזמנה שנשלחה בהצלחה: { ref, version, customerCopy, email }
 let sending = false;
 
 // תאריך היום לפי השעון המקומי (ולא UTC)
@@ -1629,7 +1629,7 @@ function buildDocHTML() {
     <tr>
       <td colspan="2" style="padding-left:12px;vertical-align:bottom;">${lbl('בית הספר')}${val(document.getElementById('schoolName').value)}${underline}</td>
       <td style="padding-left:12px;vertical-align:bottom;">${lbl('סמל מוסד')}${val(document.getElementById('schoolSymbol').value)}${underline}</td>
-      <td style="vertical-align:bottom;">${sig ? lbl('מספר הזמנה') + val(sig.orderNo) + underline : ''}</td>
+      <td style="vertical-align:bottom;">${sig && sig.ref ? lbl('מספר אסמכתא') + val(sig.ref) + underline : ''}</td>
     </tr>
     <tr><td colspan="4" style="height:10px;"></td></tr>
     <tr>
@@ -1836,8 +1836,8 @@ function safeFileName(s) {
 
 function pdfFileName() {
   const school = safeFileName($('schoolName').value) || 'הזמנה';
-  return signature
-    ? `הזמנת קורסים - ${school} - ${signature.orderNo}.pdf`
+  return signature && signature.ref
+    ? `הזמנת קורסים - ${school} - ${signature.ref}.pdf`
     : `הזמנת קורסים - ${school}.pdf`;
 }
 
@@ -2072,7 +2072,7 @@ function refreshSendButton() {
 const FIELD_LABELS = {
   schoolName: 'שם בית הספר', schoolSymbol: 'סמל מוסד', principalName: 'שם מנהל/ת',
   email: 'כתובת דוא״ל', signerName: 'שם החותם/ת', signerRole: 'תפקיד החותם/ת',
-  courses: 'הקורסים שנבחרו', consent: 'תיבת האישור', pdf: 'המסמך', orderDate: 'תאריך'
+  courses: 'הקורסים שנבחרו', consent: 'תיבת האישור', pdf: 'המסמך', orderDate: 'תאריך', ref: 'מספר האסמכתא'
 };
 
 function showSentStatus(o) {
@@ -2081,7 +2081,7 @@ function showSentStatus(o) {
     : `לא הצלחנו לשלוח עותק אל <strong dir="ltr">${esc(o.email)}</strong> (ייתכן שהכתובת שגויה). מומלץ להוריד את המסמך ולשמור אותו אצלכם.`;
   showStatus('success', `
     <div class="status-title">✅ ההזמנה נשלחה</div>
-    <div>מספר הזמנה: <strong>${esc(o.orderNo)}</strong></div>
+    <div>מספר אסמכתא: <strong>${esc(o.ref)}</strong></div>
     <div>${copyLine}</div>
     <div class="status-actions">
       <button type="button" class="btn btn-pdf" onclick="handlePDF()">📄 הורדת המסמך</button>
@@ -2118,7 +2118,7 @@ function showSendFailure(status, data) {
 function buildPayload(pdfBase64) {
   const courses = getSelectedCourses().map((c) => ({ name: c.name, price: c.price }));
   return {
-    orderNo: signature.orderNo,
+    ref: signature.ref,
     signedAt: signature.signedAt,
     timeSource: signature.source,
     order: {
@@ -2139,6 +2139,23 @@ function buildPayload(pdfBase64) {
   };
 }
 
+// מבקש מהשרת מספר אסמכתא רץ. אם מסד הנתונים לא זמין — ממשיכים עם המספר הזמני שנוצר בחתימה.
+async function assignRef() {
+  let ref = null;
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 8000);
+    const res = await fetch('/api/reserve', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}', signal: controller.signal });
+    clearTimeout(timer);
+    const data = await res.json().catch(() => ({}));
+    if (res.ok && data && data.ok && /^T-\d{4,9}$/.test(data.ref || '')) ref = data.ref;
+  } catch (e) { /* ממשיכים לגיבוי */ }
+  signature.ref = ref || signature.fallbackRef;
+  signature.refSource = ref ? 'server' : 'fallback';
+  formVersion++;            // המסמך צריך להיווצר מחדש עם המספר
+  renderSignature();
+}
+
 async function handleSend() {
   if (sending) return;
   if (sentOrder && sentOrder.version === formVersion) {
@@ -2152,6 +2169,8 @@ async function handleSend() {
   showStatus('sending', '<span class="spinner" aria-hidden="true"></span><span>מכינים את ההזמנה החתומה ושולחים אותה...</span>');
 
   try {
+    // מספר אסמכתא רץ (T-1001) מוקצה רק עכשיו, ברגע השליחה, ונכנס למסמך הסופי
+    if (!signature.ref) await assignRef();
     const entry = await getPdf();
     if (entry.version !== formVersion || !signature) {
       throw { kind: 'changed' };
@@ -2176,7 +2195,7 @@ async function handleSend() {
 
     if (res.ok && data.ok) {
       sentOrder = {
-        orderNo: payload.orderNo,
+        ref: payload.ref,
         version: formVersion,
         customerCopy: data.customerCopy !== false,
         email: payload.order.email
@@ -2463,7 +2482,7 @@ function closeSignature() {
 }
 
 /* ============================================================
-   חותמת זמן ומספר הזמנה: מהשרת, ואם אין חיבור - מהמכשיר (ומסומן כך)
+   חותמת זמן (ומספר זמני לגיבוי): מהשרת, ואם אין חיבור - מהמכשיר (ומסומן כך)
    ============================================================ */
 function formatIsraelLocal(d) {
   const parts = new Intl.DateTimeFormat('en-GB', {
@@ -2514,7 +2533,9 @@ async function confirmSignature() {
       dataUrl: exportSignature(),
       name: $('signerName').value.trim(),
       role: $('signerRole').value.trim(),
-      orderNo: stamp.orderNo,
+      ref: null,                  // מספר אסמכתא — יוקצה ברגע השליחה
+      refSource: null,
+      fallbackRef: stamp.orderNo, // מספר זמני, אם מסד הנתונים לא יהיה זמין בשליחה
       signedAt: stamp.signedAt,
       signedAtDisplay: stamp.signedAtDisplay,
       source: stamp.source
@@ -2548,7 +2569,9 @@ function renderSignature() {
     $('signMeta').innerHTML =
       `נחתם על ידי <strong>${esc(signature.name)}</strong>, ${esc(signature.role)}<br>` +
       `בתאריך ${esc(signature.signedAtDisplay)}${signature.source === 'device' ? ' (לפי שעון המכשיר)' : ''}<br>` +
-      `מספר הזמנה: <strong>${esc(signature.orderNo)}</strong>`;
+      (signature.ref
+        ? `מספר אסמכתא: <strong>${esc(signature.ref)}</strong>`
+        : `<span style="color:var(--color-text-muted)">מספר אסמכתא יינתן עם שליחת ההזמנה</span>`);
   } else {
     $('signPreviewImg').removeAttribute('src');
     $('signMeta').innerHTML = '';
